@@ -10,8 +10,31 @@
     "test": "jest"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^1.24.0",
+    "@react-native-firebase/app": "^20.3.0",
+    "@react-native-firebase/auth": "^20.3.0",
+    "@react-native-firebase/dynamic-links": "^20.3.0",
+    "@react-native-firebase/firestore": "^20.3.0",
+    "@react-navigation/bottom-tabs": "^6.6.1",
+    "@react-navigation/native": "^6.1.18",
+    "@react-navigation/native-stack": "^6.11.0",
+    "@react-navigation/stack": "^6.4.1",
+    "axios": "^1.7.3",
+    "lottie-react-native": "^6.7.2",
     "react": "18.2.0",
-    "react-native": "0.74.5"
+    "react-native": "0.74.5",
+    "react-native-document-picker": "^9.3.0",
+    "react-native-gesture-handler": "^2.18.1",
+    "react-native-gifted-chat": "^2.4.0",
+    "react-native-image-crop-picker": "^0.41.2",
+    "react-native-linear-gradient": "^2.8.3",
+    "react-native-reanimated": "^3.15.0",
+    "react-native-safe-area-context": "^4.10.8",
+    "react-native-screens": "^3.34.0",
+    "react-native-vector-icons": "^10.1.0",
+    "react-native-video": "^6.4.3",
+    "react-native-webrtc": "^124.0.3",
+    "rn-fetch-blob": "^0.12.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
