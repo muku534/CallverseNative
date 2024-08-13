@@ -1,4 +1,4 @@
-package com.callversenative
+package com.callverse
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
