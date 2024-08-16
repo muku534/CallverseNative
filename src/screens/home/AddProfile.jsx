@@ -21,6 +21,10 @@ import EvilIcons from 'react-native-vector-icons/EvilIcons';
 import firestore from '@react-native-firebase/firestore';
 import ImagePicker from 'react-native-image-crop-picker';
 import storage from '@react-native-firebase/storage';
+import auth from '@react-native-firebase/auth';
+import dynamicLinks from '@react-native-firebase/dynamic-links';
+import messaging from '@react-native-firebase/messaging';
+
 
 const AddProfile = ({ route, navigation }) => {
     const randomNumber = route.params.randomNumber;
@@ -34,6 +38,9 @@ const AddProfile = ({ route, navigation }) => {
     const [bio, setBio] = useState('');
     // const currentUserRandomNumber = '9649726428'; // replace this with the current user's random number
     const [phoneNumber, setPhoneNumber] = useState(randomNumber);
+    const [loding, setLoding] = useState(false);
+    const [linkLoading, setLinkLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -76,45 +83,122 @@ const AddProfile = ({ route, navigation }) => {
         toggleMenu();
     };
 
-    const saveProfile = async () => {
-        // Check if email already exists
-        const usersRef = firestore().collection('Users');
-        const snapshot = await usersRef.where('email', '==', email).get();
-        if (!snapshot.empty) {
-            Alert.alert('Email already exists');
-            return;
+    const sendSignupEmailLink = async (email) => {
+        try {
+            const actionCodeSettings = {
+                url: 'https://callverse.com/AddProfile?cartId=1234',
+                handleCodeInApp: true,
+                android: {
+                    packageName: 'com.callverse.android',
+                    installApp: true,
+                    minimumVersion: '12',
+                },
+                dynamicLinkDomain: 'callverse1.page.link',
+            };
+            await auth().sendSignInLinkToEmail(email, actionCodeSettings);
+            // Store the user data temporarily
+            const pendingUserData = { name, email, bio, selectedImage };
+            await AsyncStorage.setItem('pendingUserData', JSON.stringify(pendingUserData));
+
+            await AsyncStorage.setItem('signUpEmail', email);
+            Alert.alert('Sign-Up Email Sent', 'Check your email to complete the registration process.');
+        } catch (error) {
+            console.error('Error sending sign-up email link:', error);
+            Alert.alert('Error', 'Failed to send sign-up email link.');
         }
-        let downloadURL;
-        if (selectedImage) {
-            // Create a reference to the file you want to upload
-            const fileName = selectedImage.split('/').pop();
-            const storageRef = storage().ref(`profileImages/${fileName}`);
+    }
+    useEffect(() => {
+        messaging().requestPermission()
+            .then(() => console.log('Notification permission granted.'))
+            .catch(error => console.log('Notification permission not granted:', error));
 
-            // Upload the file to Firebase Storage
-            await storageRef.putFile(selectedImage);
-
-            // Get the download URL of the uploaded file
-            downloadURL = await storageRef.getDownloadURL();
-        } else {
-            // Use default image URL when no image is selected
-            downloadURL = 'https://firebasestorage.googleapis.com/v0/b/callverse-b7cb4.appspot.com/o/user-3.png?alt=media&token=5f78f05a-99fb-47dd-b8fc-7ec4970bfba4';
-        }
-
-        // Use download URL instead of the local file path
-        const userRef = firestore().collection('Users').doc(phoneNumber);
-        const doc = await userRef.get();
-        if (doc.exists) {
-            await userRef.update({
-                name,
-                email,
-                bio,
-                profileImage: downloadURL,
+        messaging().onMessage(async remoteMessage => {
+            console.log('A new FCM message arrived!', JSON.stringify(remoteMessage));
+            PushNotification.localNotification({
+                title: remoteMessage.notification.title,
+                message: remoteMessage.notification.body,
             });
+        });
+
+        // Handle dynamic links for email sign-in
+        const handleDynamicLink = async (link) => {
+            if (auth().isSignInWithEmailLink(link.url)) {
+                setLoading(true);
+                try {
+                    const email = await AsyncStorage.getItem('signUpEmail');
+                    if (email) {
+                        await auth().signInWithEmailLink(email, link.url);
+                        console.log('User signed in with email link');
+                        await saveProfile(); // Ensure saveProfile is called after successful sign-in
+                    } else {
+                        console.error('Could not find email in local storage');
+                    }
+                } catch (error) {
+                    console.error('Error signing in with email link', error);
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
+
+        const unsubscribe = dynamicLinks().onLink(handleDynamicLink);
+
+        return () => unsubscribe();
+    }, []);
+
+    const saveProfile = async () => {
+        try {
+
+            const pendingUserData = await AsyncStorage.getItem('pendingUserData');
+            const { name, email, bio, selectedImage } = JSON.parse(pendingUserData || '{}');
+
+            let downloadURL;
+            if (selectedImage) {
+                // Create a reference to the file you want to upload
+                const fileName = selectedImage.split('/').pop();
+                const storageRef = storage().ref(`profileImages/${fileName}`);
+
+                // Upload the file to Firebase Storage
+                await storageRef.putFile(selectedImage);
+
+                // Get the download URL of the uploaded file
+                downloadURL = await storageRef.getDownloadURL();
+            } else {
+                // Use default image URL when no image is selected
+                downloadURL = 'https://firebasestorage.googleapis.com/v0/b/callverse-b7cb4.appspot.com/o/user-3.png?alt=media&token=5f78f05a-99fb-47dd-b8fc-7ec4970bfba4';
+            }
+
+            const userData = {
+                randomNumber: phoneNumber,
+                email: email,
+                profileImage: downloadURL,
+                name: name,
+                bio: bio
+            }
+
+            await firestore().collection('Users').doc(phoneNumber).set(userData);
+
             Alert.alert('Profile saved successfully');
             navigation.navigate('TabStack');
-        } else {
-            Alert.alert('User not found');
+
+        } catch (error) {
+            console.log("somrhing went wrong", error);
+            Alert.alert("somthing went werong")
         }
+
+        // const userRef = firestore().collection('Users').doc(phoneNumber);
+        // const doc = await userRef.get();
+        // if (doc.exists) {
+        //     await userRef.update({
+        //         name,
+        //         email,
+        //         bio,
+        //         profileImage: downloadURL,
+        //     });
+
+        // } else {
+        //     Alert.alert('User not found');
+        // }
     };
 
     return (
@@ -255,7 +339,7 @@ const AddProfile = ({ route, navigation }) => {
                         <Button
                             title="Save"
                             // filled
-                            onPress={() => saveProfile()}
+                            onPress={() => sendSignupEmailLink(email)}
                             style={{
                                 marginVertical: hp(4),
                             }}

@@ -46,16 +46,16 @@ const Welcome = ({ navigation }) => {
                 setRandomNumber(newNumber);
                 setGeneratedNumber(true);
 
-                // Store the generated number and other user details in Firestore
-                const user = {
-                    randomNumber: newNumber,
-                    // userName: 'John Doe', // Replace with actual user name
-                    // email: 'prajapatimukesh0111@gmail.com', // Replace with actual email
-                    // gender: 'Male', // Replace with actual gender
-                    // bio: 'This is a bio', // Replace with actual bio
-                    // ...other fields
-                };
-                await firestore().collection('Users').doc(newNumber.toString()).set(user);
+                // // Store the generated number and other user details in Firestore
+                // const user = {
+                //     randomNumber: newNumber,
+                //     // userName: 'John Doe', // Replace with actual user name
+                //     // email: 'prajapatimukesh0111@gmail.com', // Replace with actual email
+                //     // gender: 'Male', // Replace with actual gender
+                //     // bio: 'This is a bio', // Replace with actual bio
+                //     // ...other fields
+                // };
+                // await firestore().collection('Users').doc(newNumber.toString()).set(user);
 
                 Alert.alert('Generated Number', `Your generated number is ${newNumber}`, [
                     {
