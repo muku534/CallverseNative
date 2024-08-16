@@ -14,6 +14,7 @@ import Login from './src/screens/auth/Login';
 import Welcome from './src/screens/auth/Welcome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { COLORS } from './constants';
+import AddProfile from './src/screens/home/AddProfile';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -108,6 +109,7 @@ function App() {
           <Stack.Screen name="Welcome" component={Welcome} options={{ headerShown: false }} />
           <Stack.Screen name="TabStack" component={TabStack} options={{ headerShown: false }} />
           <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+          <Stack.Screen name="AddProfile" component={AddProfile} options={{ headerShown: false }} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
