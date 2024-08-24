@@ -15,6 +15,9 @@ import Welcome from './src/screens/auth/Welcome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { COLORS } from './constants';
 import AddProfile from './src/screens/home/AddProfile';
+import Contacts from './src/screens/home/contact';
+import Chats from './src/screens/home/Chat';
+import Profile from './src/screens/home/Profile';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -36,7 +39,7 @@ const TabStack = () => {
         },
       }}
     >
-      <Tab.Screen name="HomeScreen" component={Welcome} options={{
+      <Tab.Screen name="HomeScreen" component={Contacts} options={{
         headerShown: false,
         tabBarLabel: 'Home',
         tabBarIcon: ({ focused, color, size }) => (
@@ -46,7 +49,7 @@ const TabStack = () => {
           </View>
         ),
       }} />
-      <Tab.Screen name="Chats" component={Login} options={{
+      <Tab.Screen name="Chats" component={Chats} options={{
         headerShown: false,
         tabBarLabel: 'Chats',
         tabBarIcon: ({ focused, color, size }) => (
@@ -56,7 +59,7 @@ const TabStack = () => {
           </View>
         ),
       }} />
-      <Tab.Screen name="Profile" component={SplashScreen} options={{
+      <Tab.Screen name="Profile" component={Profile} options={{
         headerShown: false,
         tabBarLabel: 'Profile',
         tabBarIcon: ({ focused, color, size }) => (

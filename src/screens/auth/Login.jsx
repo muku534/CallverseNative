@@ -20,7 +20,7 @@ import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import dynamicLinks from '@react-native-firebase/dynamic-links';
 import messaging from '@react-native-firebase/messaging';
-import { EmailSignin } from '../../config/EmailSgnup';
+import { EmailSignin } from '../../config/EmailSignup';
 
 const Login = ({ navigation }) => {
     const [email, setEmail] = useState('');
@@ -37,6 +37,7 @@ const Login = ({ navigation }) => {
         }
 
         try {
+            setLoading(true)
             const user = await EmailSignin({ email, password });
             if (user) {
                 ToastAndroid.show('Signed in successfully!', ToastAndroid.SHORT);
@@ -51,16 +52,19 @@ const Login = ({ navigation }) => {
             } else {
                 ToastAndroid.show('Invalid email or password', ToastAndroid.SHORT);
             }
+            setLoading(false)
         } catch (error) {
-            console.error('Signup Error:', error);
+            console.error('Signin Error:', error);
             ToastAndroid.show('Failed to signin . Please try again.', ToastAndroid.SHORT);
+        } finally {
+            setLoading(false)
         }
     }
 
 
     return (
         <SafeAreaView style={styles.container} >
-            <ScrollView>
+            <ScrollView showsVerticalScrollIndicator={false}>
                 <View>
                     <View style={styles.imageContainer}>
                         <Image source={require('../../../assets/image/9233852_4112338.jpg')}
@@ -149,14 +153,13 @@ const styles = StyleSheet.create({
     imageContainer: {
         flex: 1,
         alignItems: 'center',
-        justifyContent: 'flex-start',
-        flexDirection: 'column',
-        marginHorizontal: wp(2),
-        height: '30%',
+        justifyContent: 'center',
+        // marginHorizontal: wp(2),
+        // height: '30%',
     },
     image: {
         width: '100%',
-        height: hp(40),
+        height: hp(37.5),
         // marginVertical: hp(2),
     },
     contentContainer: {
@@ -165,7 +168,7 @@ const styles = StyleSheet.create({
         // justifyContent: 'space-between',
     },
     welcomeContainer: {
-        marginVertical: hp(2),
+        marginVertical: hp(1),
     },
     welcomeText: {
         fontSize: hp(4),
@@ -184,14 +187,14 @@ const styles = StyleSheet.create({
     },
     lable: {
         color: COLORS.black,
-        fontSize: hp(2.2),
+        fontSize: hp(2),
         fontWeight: '400',
-        marginTop: hp(2.2),
+        marginTop: hp(1.5),
         marginBottom: hp(1),
     },
     TextInput: {
         width: '100%',
-        height: hp(6.2),
+        height: hp(6),
         borderColor: COLORS.secondaryGray,
         borderWidth: 0.5,
         borderRadius: wp(2),
@@ -228,7 +231,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginHorizontal: wp(5),
-        marginTop: hp(6),
+        marginTop: hp(2.4),
     },
     line: {
         flex: 1,

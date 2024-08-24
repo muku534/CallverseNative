@@ -25,7 +25,7 @@ import auth from '@react-native-firebase/auth';
 import dynamicLinks from '@react-native-firebase/dynamic-links';
 import messaging from '@react-native-firebase/messaging';
 // import { ToastContainer, useToast } from 'rn-toastify';
-import { EmailSignup } from '../../config/EmailSgnup';
+import { EmailSignup } from '../../config/EmailSignup';
 import { CommonActions } from '@react-navigation/native';
 
 const AddProfile = ({ route, navigation }) => {
