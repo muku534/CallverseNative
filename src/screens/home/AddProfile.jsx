@@ -2,7 +2,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react-native/no-inline-styles */
 /* eslint-disable prettier/prettier */
-import { View, Text, Pressable, Image, Alert, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, Modal, TextInput } from 'react-native';
+import { View, Text, Pressable, Image, Alert, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, Modal, TextInput, ToastAndroid } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import COLORS from '../../../constants/colors';
@@ -24,7 +24,9 @@ import storage from '@react-native-firebase/storage';
 import auth from '@react-native-firebase/auth';
 import dynamicLinks from '@react-native-firebase/dynamic-links';
 import messaging from '@react-native-firebase/messaging';
-
+// import { ToastContainer, useToast } from 'rn-toastify';
+import { EmailSignup } from '../../config/EmailSgnup';
+import { CommonActions } from '@react-navigation/native';
 
 const AddProfile = ({ route, navigation }) => {
     const randomNumber = route.params.randomNumber;
@@ -35,12 +37,9 @@ const AddProfile = ({ route, navigation }) => {
     const [viewProfileModalVisible, setViewProfileModalVisible] = useState(false);
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
-    const [bio, setBio] = useState('');
-    // const currentUserRandomNumber = '9649726428'; // replace this with the current user's random number
+    const [password, setPassword] = useState('');
     const [phoneNumber, setPhoneNumber] = useState(randomNumber);
-    const [loding, setLoding] = useState(false);
-    const [linkLoading, setLinkLoading] = useState(false);
-    const [loading, setLoading] = useState(false);
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -83,68 +82,96 @@ const AddProfile = ({ route, navigation }) => {
         toggleMenu();
     };
 
-    const sendSignupEmailLink = async (email) => {
-        try {
-            const actionCodeSettings = {
-                url: 'https://callverse.com/AddProfile?cartId=1234',
-                handleCodeInApp: true,
-                android: {
-                    packageName: 'com.callverse.android',
-                    installApp: true,
-                    minimumVersion: '12',
-                },
-                dynamicLinkDomain: 'callverse1.page.link',
-            };
-            await auth().sendSignInLinkToEmail(email, actionCodeSettings);
-            // Store the user data temporarily
-            const pendingUserData = { name, email, bio, selectedImage };
-            await AsyncStorage.setItem('pendingUserData', JSON.stringify(pendingUserData));
+    // const sendSignupEmailLink = async (email) => {
+    //     try {
+    //         const actionCodeSettings = {
+    //             url: 'https://callverse.com/AddProfile?cartId=1234',
+    //             handleCodeInApp: true,
+    //             android: {
+    //                 packageName: 'com.callverse.android',
+    //                 installApp: true,
+    //                 minimumVersion: '12',
+    //             },
+    //             dynamicLinkDomain: 'callverse1.page.link',
+    //         };
+    //         await auth().sendSignInLinkToEmail(email, actionCodeSettings);
+    //         // Store the user data temporarily
+    //         const pendingUserData = { name, email, bio, selectedImage };
+    //         await AsyncStorage.setItem('pendingUserData', JSON.stringify(pendingUserData));
 
-            await AsyncStorage.setItem('signUpEmail', email);
-            Alert.alert('Sign-Up Email Sent', 'Check your email to complete the registration process.');
-        } catch (error) {
-            console.error('Error sending sign-up email link:', error);
-            Alert.alert('Error', 'Failed to send sign-up email link.');
+    //         await AsyncStorage.setItem('signUpEmail', email);
+    //         Alert.alert('Sign-Up Email Sent', 'Check your email to complete the registration process.');
+    //     } catch (error) {
+    //         console.error('Error sending sign-up email link:', error);
+    //         Alert.alert('Error', 'Failed to send sign-up email link.');
+    //     }
+    // }
+    // useEffect(() => {
+    //     messaging().requestPermission()
+    //         .then(() => console.log('Notification permission granted.'))
+    //         .catch(error => console.log('Notification permission not granted:', error));
+
+    //     messaging().onMessage(async remoteMessage => {
+    //         console.log('A new FCM message arrived!', JSON.stringify(remoteMessage));
+    //         PushNotification.localNotification({
+    //             title: remoteMessage.notification.title,
+    //             message: remoteMessage.notification.body,
+    //         });
+    //     });
+
+    //     // Handle dynamic links for email sign-in
+    //     const handleDynamicLink = async (link) => {
+    //         if (auth().isSignInWithEmailLink(link.url)) {
+    //             setLoading(true);
+    //             try {
+    //                 const email = await AsyncStorage.getItem('signUpEmail');
+    //                 if (email) {
+    //                     await auth().signInWithEmailLink(email, link.url);
+    //                     console.log('User signed in with email link');
+    //                     await saveProfile(); // Ensure saveProfile is called after successful sign-in
+    //                 } else {
+    //                     console.error('Could not find email in local storage');
+    //                 }
+    //             } catch (error) {
+    //                 console.error('Error signing in with email link', error);
+    //             } finally {
+    //                 setLoading(false);
+    //             }
+    //         }
+    //     };
+
+    //     const unsubscribe = dynamicLinks().onLink(handleDynamicLink);
+
+    //     return () => unsubscribe();
+    // }, []);
+
+
+    const handleSignup = async () => {
+        if (!email || !password || !name) {
+            ToastAndroid.show('Please enter email and password', ToastAndroid.SHORT);
+            return;
         }
-    }
-    useEffect(() => {
-        messaging().requestPermission()
-            .then(() => console.log('Notification permission granted.'))
-            .catch(error => console.log('Notification permission not granted:', error));
 
-        messaging().onMessage(async remoteMessage => {
-            console.log('A new FCM message arrived!', JSON.stringify(remoteMessage));
-            PushNotification.localNotification({
-                title: remoteMessage.notification.title,
-                message: remoteMessage.notification.body,
-            });
-        });
-
-        // Handle dynamic links for email sign-in
-        const handleDynamicLink = async (link) => {
-            if (auth().isSignInWithEmailLink(link.url)) {
-                setLoading(true);
-                try {
-                    const email = await AsyncStorage.getItem('signUpEmail');
-                    if (email) {
-                        await auth().signInWithEmailLink(email, link.url);
-                        console.log('User signed in with email link');
-                        await saveProfile(); // Ensure saveProfile is called after successful sign-in
-                    } else {
-                        console.error('Could not find email in local storage');
-                    }
-                } catch (error) {
-                    console.error('Error signing in with email link', error);
-                } finally {
-                    setLoading(false);
-                }
+        try {
+            const user = await EmailSignup({ email, password, name, randomNumber })
+            if (user) {
+                ToastAndroid.show('User created successfully', ToastAndroid.SHORT);
+                navigation.dispatch(
+                    CommonActions.reset({
+                        index: 0,
+                        routes: [{ name: 'TabStack' }],
+                    })
+                );
+            } else {
+                ToastAndroid.show('Failed to create user', ToastAndroid.SHORT);
             }
-        };
+        } catch (error) {
+            console.error('Error signing up', error);
+            ToastAndroid.show('Failed to create user', ToastAndroid.SHORT);
 
-        const unsubscribe = dynamicLinks().onLink(handleDynamicLink);
+        }
 
-        return () => unsubscribe();
-    }, []);
+    }
 
     const saveProfile = async () => {
         try {
@@ -314,7 +341,7 @@ const AddProfile = ({ route, navigation }) => {
                             />
                         </View>
 
-                        <Text style={styles.lable}>Bio</Text>
+                        {/** <Text style={styles.lable}>Bio</Text>
                         <View style={styles.inputContainer}>
                             <TextInput
                                 placeholder="Hi there! My name is XYZ"
@@ -323,7 +350,7 @@ const AddProfile = ({ route, navigation }) => {
                                 style={styles.textInput}
                                 onChangeText={(text) => setBio(text)}
                             />
-                        </View>
+                        </View> */}
 
                         <Text style={styles.lable}>Email </Text>
                         <View style={styles.inputContainer}>
@@ -336,10 +363,21 @@ const AddProfile = ({ route, navigation }) => {
                             />
                         </View>
 
+                        <Text style={styles.lable}>password</Text>
+                        <View style={styles.inputContainer}>
+                            <TextInput
+                                placeholder="enter your password"
+                                placeholderTextColor={COLORS.secondaryGray}
+                                keyboardType="visible-password"
+                                style={styles.textInput}
+                                onChangeText={(text) => setPassword(text)}
+                            />
+                        </View>
+
                         <Button
-                            title="Save"
+                            title="Signup"
                             // filled
-                            onPress={() => sendSignupEmailLink(email)}
+                            onPress={handleSignup}
                             style={{
                                 marginVertical: hp(4),
                             }}

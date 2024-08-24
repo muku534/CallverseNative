@@ -5,7 +5,7 @@
 /* eslint-disable react-native/no-inline-styles */
 /* eslint-disable prettier/prettier */
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, Alert, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, Alert, ScrollView, StyleSheet, ToastAndroid } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONTS, SIZES } from '../../../constants';
 import Button from '../../Components/Button';
@@ -20,105 +20,42 @@ import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import dynamicLinks from '@react-native-firebase/dynamic-links';
 import messaging from '@react-native-firebase/messaging';
+import { EmailSignin } from '../../config/EmailSgnup';
 
 const Login = ({ navigation }) => {
     const [email, setEmail] = useState('');
     const [loding, setLoding] = useState(false);
     const [linkLoading, setLinkLoading] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [password, setPassword] = useState('');
 
 
-    const sendEmailLink = async () => {
-        setLoading(true);
+    const handleSignin = async () => {
+        if (!email || !password) {
+            ToastAndroid.show('Please enter email and password', ToastAndroid.SHORT);
+            return;
+        }
 
         try {
-            const userQuerySnapshot = await firestore().collection('Users').where('email', '==', email).get();
-
-            if (userQuerySnapshot.empty) {
-                Alert.alert('Error', 'This email does not exist.');
-                setLoading(false);
-                return;
+            const user = await EmailSignin({ email, password });
+            if (user) {
+                ToastAndroid.show('Signed in successfully!', ToastAndroid.SHORT);
+                navigation.dispatch(
+                    CommonActions.reset({
+                        index: 0,
+                        routes: [{ name: 'TabStack' }],
+                    })
+                );
+                setEmail('');
+                setPassword('');
+            } else {
+                ToastAndroid.show('Invalid email or password', ToastAndroid.SHORT);
             }
-
-            const userData = userQuerySnapshot.docs[0].data();
-
-            await AsyncStorage.setItem('userData', JSON.stringify(userData));
-            console.log('User data stored in AsyncStorage:', userData);
-
-            await messaging().requestPermission();
-            const fcmToken = await messaging().getToken();
-            console.log('FCM Token:', fcmToken);
-
-            if (!fcmToken || typeof fcmToken !== 'string') {
-                console.error('Invalid FCM token:', fcmToken);
-                setLoading(false);
-                return;
-            }
-
-            userData.fcmToken = fcmToken;
-            await firestore().collection('Users').doc(String(userData.randomNumber)).update({ fcmToken });
-
-            console.log('FCM Token stored in user data:', userData);
-
-            const actionCodeSettings = {
-                url: 'https://callverse.com/Login?cartId=1234',
-                handleCodeInApp: true,
-                android: {
-                    packageName: 'com.callverse.android',
-                    installApp: true,
-                    minimumVersion: '12',
-                },
-                dynamicLinkDomain: 'callverse1.page.link',
-            };
-
-            await auth().sendSignInLinkToEmail(email, actionCodeSettings);
-            await AsyncStorage.setItem('emailForSignIn', email);
-            Alert.alert('Success', 'Sign-in link sent to your email.');
         } catch (error) {
-            console.error('Error sending sign-in link:', error);
-            Alert.alert('Something went wrong. Please try again.');
-        } finally {
-            setLoading(false);
+            console.error('Signup Error:', error);
+            ToastAndroid.show('Failed to signin . Please try again.', ToastAndroid.SHORT);
         }
-    };
-
-    useEffect(() => {
-        messaging().requestPermission()
-            .then(() => console.log('Notification permission granted.'))
-            .catch(error => console.log('Notification permission not granted:', error));
-
-        messaging().onMessage(async remoteMessage => {
-            console.log('A new FCM message arrived!', JSON.stringify(remoteMessage));
-            PushNotification.localNotification({
-                title: remoteMessage.notification.title,
-                message: remoteMessage.notification.body,
-            });
-        });
-
-        const handleDynamicLink = link => {
-            if (auth().isSignInWithEmailLink(link.url)) {
-                setLoading(true);
-                AsyncStorage.getItem('emailForSignIn').then(email => {
-                    if (email) {
-                        auth().signInWithEmailLink(email, link.url)
-                            .then(result => {
-                                console.log('User signed in with email link', result);
-                                navigation.navigate('TabStack');
-                            })
-                            .catch(error => console.error('Error signing in with email link', error))
-                            .finally(() => setLoading(false));
-                    } else {
-                        console.error('Could not find email in local storage');
-                        setLoading(false);
-                    }
-                });
-            }
-        };
-
-        const unsubscribe = dynamicLinks().onLink(handleDynamicLink);
-
-        return () => unsubscribe();
-    }, []);
+    }
 
 
     return (
@@ -148,6 +85,20 @@ const Login = ({ navigation }) => {
                                 />
                             </View>
                         </View>
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.lable}>Password</Text>
+                            <View style={styles.TextInput}>
+                                <TextInput
+                                    // maxLength={10}
+                                    placeholder="Enter your Password"
+                                    placeholderTextColor={COLORS.darkgray1}
+                                    keyboardType="visible-password"
+                                    style={{ width: '100%', color: COLORS.darkgray1 }}
+                                    value={password}
+                                    onChangeText={text => setPassword(text)}
+                                />
+                            </View>
+                        </View>
                         {/** {showOtpInput && (
                             <View style={styles.inputContainer}>
                                 <Text style={styles.lable}>OTP</Text>
@@ -166,8 +117,7 @@ const Login = ({ navigation }) => {
                         )} */}
                         <Button
                             title="Login"
-                            onPress={sendEmailLink}
-                            loding={loding || linkLoading}
+                            onPress={handleSignin}
                             style={styles.Button}
                         />
 
