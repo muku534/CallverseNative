@@ -19,11 +19,15 @@ import Entypo from 'react-native-vector-icons/Entypo';
 import firestore from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchContact } from '../../redux/action';
+import { useSelector } from 'react-redux';
 
 
 const Contacts = ({ navigation }) => {
     const [searchVisible, setSearchVisible] = useState(false);
     const [searchText, setSearchText] = useState('');
+    const contacts = useSelector(state => state.contacts)
+
+    console.log("contacts", contacts)
 
     const toggelInput = () => {
         setSearchVisible(!searchVisible);

@@ -75,6 +75,24 @@ const Profile = ({ navigation }) => {
         }
     };
 
+    const handleLogout = async () => {
+        try {
+            await firebase.auth().signOut();
+            // Clear user data from AsyncStorage
+            await AsyncStorage.removeItem('userData');
+            await AsyncStorage.removeItem('randomNumber');
+            // Navigate to login screen or any other screen
+            navigation.dispatch(
+                CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: 'Login' }],
+                })
+            );
+        } catch (error) {
+            console.error('Error signing out:', error);
+        }
+    };
+
     return (
         <SafeAreaView style={{ flex: 1, }}>
             <StatusBar backgroundColor={COLORS.lightGreen} barStyle="light-content" />
@@ -271,6 +289,7 @@ const Profile = ({ navigation }) => {
 
                     <TouchableOpacity
                         style={styles.logOutContainer}
+                        onPress={handleLogout}
                     >
                         <View style={{
                             flexDirection: 'row',
