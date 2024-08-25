@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Linking, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
@@ -18,10 +18,12 @@ import AddProfile from './src/screens/home/AddProfile';
 import Contacts from './src/screens/home/contact';
 import Chats from './src/screens/home/Chat';
 import Profile from './src/screens/home/Profile';
+import { Provider } from 'react-redux';
+import store from './src/redux/store';
+import AddContact from './src/screens/home/AddContact';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
-
 
 const TabStack = () => {
   return (
@@ -72,51 +74,25 @@ const TabStack = () => {
     </Tab.Navigator>
   );
 };
+
+
 function App() {
-
-  const [initialScreen, setInitialScreen] = useState('SplashScreen');
-  // const [user, setUser] = useState(null);
   const navigationRef = useRef(null);
-
-  useEffect(() => {
-    Linking.getInitialURL().then(url => {
-      navigate(url);
-    });
-
-    const subscription = Linking.addEventListener('url', event => {
-      navigate(event.url);
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, []);
-
-  const navigate = (url) => {
-    if (url) {
-      const route = url.replace(/.*?:\/\//g, '');
-      const routeName = route.split('/')[0];
-
-      if (routeName === 'Login') {
-        navigationRef.current?.navigate('Login');
-      }
-    }
-  };
-
   return (
-    // <Provider store={store}>
-    <SafeAreaProvider>
-      <NavigationContainer ref={navigationRef}>
-        <Stack.Navigator initialRouteName={initialScreen}>
-          <Stack.Screen name="SplashScreen" component={SplashScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="Welcome" component={Welcome} options={{ headerShown: false }} />
-          <Stack.Screen name="TabStack" component={TabStack} options={{ headerShown: false }} />
-          <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
-          <Stack.Screen name="AddProfile" component={AddProfile} options={{ headerShown: false }} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </SafeAreaProvider>
-    // </Provider>
+    <Provider store={store}>
+      <SafeAreaProvider>
+        <NavigationContainer ref={navigationRef}>
+          <Stack.Navigator initialRouteName={SplashScreen}>
+            <Stack.Screen name="SplashScreen" component={SplashScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Welcome" component={Welcome} options={{ headerShown: false }} />
+            <Stack.Screen name="TabStack" component={TabStack} options={{ headerShown: false }} />
+            <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+            <Stack.Screen name="AddProfile" component={AddProfile} options={{ headerShown: false }} />
+            <Stack.Screen name="AddContact" component={AddContact} options={{ headerShown: false }} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </SafeAreaProvider>
+    </Provider>
   );
 }
 
