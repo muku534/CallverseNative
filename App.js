@@ -21,6 +21,7 @@ import Profile from './src/screens/home/Profile';
 import { Provider } from 'react-redux';
 import store from './src/redux/store';
 import AddContact from './src/screens/home/AddContact';
+import PersonalChats from './src/screens/home/PersonalChat';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -89,6 +90,7 @@ function App() {
             <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
             <Stack.Screen name="AddProfile" component={AddProfile} options={{ headerShown: false }} />
             <Stack.Screen name="AddContact" component={AddContact} options={{ headerShown: false }} />
+            <Stack.Screen name="PersonalChats" component={PersonalChats} options={{ headerShown: false }} />
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>

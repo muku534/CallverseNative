@@ -18,19 +18,38 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 import Entypo from 'react-native-vector-icons/Entypo';
 import firestore from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { fetchContact } from '../../redux/action';
-import { useSelector } from 'react-redux';
+import { fetchContact, fetchContacts } from '../../redux/action';
+import { useDispatch, useSelector } from 'react-redux';
 
 
 const Contacts = ({ navigation }) => {
     const [searchVisible, setSearchVisible] = useState(false);
     const [searchText, setSearchText] = useState('');
     const contacts = useSelector(state => state.contacts)
-
-    console.log("contacts", contacts)
+    const [filteredChats, setFilteredChats] = useState(contacts);
+    const [selectedContact, setSelectedContact] = useState(null);
 
     const toggelInput = () => {
         setSearchVisible(!searchVisible);
+    };
+
+    useEffect(() => {
+        if (searchText === '') {
+            setFilteredChats(contacts);
+        } else {
+            setFilteredChats(contacts.filter(chat =>
+                (chat.name && chat.name.toLowerCase().includes(searchText.toLowerCase())) ||
+                (chat.message && chat.message.toLowerCase().includes(searchText.toLowerCase()))
+            ));
+        }
+    }, [searchText, contacts]);
+
+    const clearSearch = () => {
+        setSearchText('');
+    };
+
+    const handleLongPress = (contact) => {
+        setSelectedContact(contact);
     };
 
     return (
@@ -68,6 +87,31 @@ const Contacts = ({ navigation }) => {
                 </View>
             )}
 
+
+            <View style={{ marginVertical: hp(1) }}>
+                <FlatList
+                    data={filteredChats}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity onPress={() => navigation.navigate('PersonalChats', { User: item })} onLongPress={() => handleLongPress(item)}>
+                            <View style={[item === selectedContact && styles.selectedContact, { flexDirection: 'row', padding: wp(2), alignItems: 'center', }]}>
+                                <Image source={require('../../../assets/image/user3.jpg')} style={{ width: wp(13), height: wp(13), borderRadius: wp(13) }} />
+                                <View style={{ flexDirection: 'column' }}>
+                                    <Text style={{ marginLeft: wp(2.2), paddingTop: hp(0.5), fontFamily: fontFamily.FONTS.Medium, fontSize: hp(2.2), color: COLORS.darkgray }} numberOfLines={1}>{item.name}</Text>
+                                    <Text style={{ marginLeft: wp(2.2), fontFamily: fontFamily.FONTS.regular, fontSize: hp(1.8), color: COLORS.darkgray1 }} numberOfLines={1}>{item.message}</Text>
+                                </View>
+                            </View>
+                        </TouchableOpacity>
+                    )}
+                    keyExtractor={item => item.randomNumber}
+                    ListEmptyComponent={() => (
+                        <View style={{ flex: 1, marginVertical: hp(30), justifyContent: 'center', alignItems: 'center' }}>
+                            <Text style={{ fontSize: hp(2.2), padding: hp(1.5), color: COLORS.secondaryGray }}>you dont have any contacts add contact click on the + button </Text>
+                        </View>
+                    )}
+                />
+            </View>
+
+
             <TouchableOpacity
                 style={{
                     position: 'absolute',
@@ -91,4 +135,8 @@ const Contacts = ({ navigation }) => {
 
 export default Contacts;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+    selectedContact: {
+        backgroundColor: COLORS.gray, // Change the background color for the selected contact
+    },
+});

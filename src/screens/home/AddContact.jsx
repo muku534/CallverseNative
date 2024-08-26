@@ -38,7 +38,7 @@ const AddContact = () => {
             const newContact = {
                 name: contactName,
                 randomNumber: phoneNumber,
-                // profileImage: userData.profileImage,
+                profileImage: userData.photoUrl,
                 // bio: userData.bio,
             };
 
@@ -53,7 +53,12 @@ const AddContact = () => {
                     contacts: [newContact],
                 });
             }
-
+            navigation.dispatch(
+                CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: 'TabStack' }],
+                })
+            );
             Alert.alert('Contact saved successfully');
             setContactName('');
             setPhoneNumber('');

@@ -28,11 +28,13 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { firebase } from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import messaging from '@react-native-firebase/messaging';
+import { useSelector } from 'react-redux';
+import { logout } from '../../redux/action';
 
 
 const Profile = ({ navigation }) => {
     const [showMenu, setShowMenu] = useState(false);
-    const [userData, setUserData] = useState(null);
+    const userData = useSelector(state => state.userData)
 
     const toggleMenu = () => {
         setShowMenu(!showMenu);
@@ -82,6 +84,7 @@ const Profile = ({ navigation }) => {
             await AsyncStorage.removeItem('userData');
             await AsyncStorage.removeItem('randomNumber');
             // Navigate to login screen or any other screen
+            dispatch(logout())
             navigation.dispatch(
                 CommonActions.reset({
                     index: 0,
@@ -108,19 +111,19 @@ const Profile = ({ navigation }) => {
                 <View style={styles.userInformation}>
 
                     <View style={styles.imageContainer}>
-                        <Image source={{ uri: userData?.profileImage }} style={styles.userImage} />
+                        <Image source={{ uri: userData?.photoUrl }} style={styles.userImage} />
                     </View>
                     <View style={styles.userNameContainer}>
                         <Text style={styles.nameText}>
-                            {userData?.name}
+                            {userData?.displayName}
                         </Text>
                         <Text style={styles.randomNumber}> {userData?.randomNumber} </Text>
                     </View>
 
-                    {/** <TouchableOpacity onPress={() => navigation.navigate('AddProfile')} style={styles.rightArrow}>
+                    <TouchableOpacity onPress={() => navigation.navigate('AddProfile')} style={styles.rightArrow}>
                         <MaterialIcons name="keyboard-arrow-right" size={24}
                             color={COLORS.black} />
-                    </TouchableOpacity> */}
+                    </TouchableOpacity>
                 </View>
                 <View style={styles.menuContainer}>
                     <TouchableOpacity onPress={() => navigation.navigate('AddProfile')}
@@ -374,7 +377,7 @@ const styles = StyleSheet.create({
         // marginLeft: 55,
     },
     menuContainer: {
-        marginTop: hp(4),
+        marginVertical: hp(4),
     },
     TouchableOpacity: {
         flexDirection: 'row',
