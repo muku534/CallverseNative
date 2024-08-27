@@ -18,12 +18,64 @@ import firestore from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch, useSelector } from 'react-redux';
 import { addContact } from '../../redux/action';
+import { CommonActions } from '@react-navigation/native';
 
-const AddContact = () => {
+const AddContact = ({ navigation }) => {
     const dispatch = useDispatch();
     const [contactName, setContactName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const userData = useSelector(state => state.userData)
+    console.log("userId", userData.id)
+
+
+    const checkUserByPhoneNumber = async (phoneNumber) => {
+        try {
+            // Log the phone number to verify it’s correct
+            console.log('Checking phone number:', phoneNumber);
+
+            // Convert phoneNumber to a number if stored as a number in Firestore
+            const numberPhoneNumber = Number(phoneNumber);
+
+            // Query the Users collection for a document with the given phone number
+            const querySnapshot = await firestore()
+                .collection('Users')
+                .where('randomNumber', '==', numberPhoneNumber)
+                .get();
+
+            // Log the query result to see what is returned
+            console.log('Query Snapshot:', querySnapshot.empty ? 'No documents found' : 'Documents found');
+            querySnapshot.docs.forEach(doc => console.log('Document ID:', doc.id, 'Data:', doc.data()));
+
+            // If a matching document is found, retrieve the user data
+            if (!querySnapshot.empty) {
+                // Get the first document in the result
+                const userDoc = querySnapshot.docs[0];
+
+                // Retrieve the document data
+                const contactData = userDoc.data();
+                console.log('User Data:', contactData); // Log the user data to see what is returned
+
+                // Extract the fields you need
+                const uid = userDoc.id;
+                const { profileImage, email } = contactData;
+
+                // Log the results for debugging
+                console.log('User ID:', uid);
+                console.log('User Data:', contactData);
+
+                // Return the user data along with the document ID
+                return { uid, profileImage, email };
+            } else {
+                Alert.alert('User not found');
+                return null;
+            }
+        } catch (error) {
+            console.error('Error checking user:', error);
+            Alert.alert('Error checking user');
+            return null;
+        }
+    };
+
 
     const saveContact = async () => {
         if (!userData || !userData.id) {
@@ -32,37 +84,44 @@ const AddContact = () => {
         }
 
         try {
-            const contactRef = firestore().collection('Contacts').doc(userData.id);
-            const contactDoc = await contactRef.get();
+            // Check if the phone number exists in the Users collection
+            const existingUserData = await checkUserByPhoneNumber(phoneNumber);
 
-            const newContact = {
-                name: contactName,
-                randomNumber: phoneNumber,
-                profileImage: userData.photoUrl,
-                // bio: userData.bio,
-            };
+            if (existingUserData) {
+                // If user exists, get their data
+                console.log("existingUserData", existingUserData)
+                const newContact = {
+                    name: contactName,
+                    randomNumber: phoneNumber,
+                    profileImage: existingUserData.profileImage, // Use the found user's photoUrl
+                    email: existingUserData.email, // You can store more data if needed
+                };
 
-            if (contactDoc.exists) {
-                // If the document exists, update it
-                await contactRef.update({
-                    contacts: firestore.FieldValue.arrayUnion(newContact),
-                });
-            } else {
-                // If the document doesn't exist, create it
-                await contactRef.set({
-                    contacts: [newContact],
-                });
+                const contactRef = firestore().collection('Contacts').doc(userData.id);
+                const contactDoc = await contactRef.get();
+
+                if (contactDoc.exists) {
+                    // If the document exists, update it
+                    await contactRef.update({
+                        contacts: firestore.FieldValue.arrayUnion(newContact),
+                    });
+                } else {
+                    // If the document doesn't exist, create it
+                    await contactRef.set({
+                        contacts: [newContact],
+                    });
+                }
+                navigation.dispatch(
+                    CommonActions.reset({
+                        index: 0,
+                        routes: [{ name: 'TabStack' }],
+                    })
+                );
+                Alert.alert('Contact saved successfully');
+                setContactName('');
+                setPhoneNumber('');
+                dispatch(addContact(newContact));
             }
-            navigation.dispatch(
-                CommonActions.reset({
-                    index: 0,
-                    routes: [{ name: 'TabStack' }],
-                })
-            );
-            Alert.alert('Contact saved successfully');
-            setContactName('');
-            setPhoneNumber('');
-            dispatch(addContact(newContact));
         } catch (error) {
             console.error('Error saving contact:', error);
             Alert.alert('Error saving contact');

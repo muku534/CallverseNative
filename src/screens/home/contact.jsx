@@ -94,7 +94,7 @@ const Contacts = ({ navigation }) => {
                     renderItem={({ item }) => (
                         <TouchableOpacity onPress={() => navigation.navigate('PersonalChats', { User: item })} onLongPress={() => handleLongPress(item)}>
                             <View style={[item === selectedContact && styles.selectedContact, { flexDirection: 'row', padding: wp(2), alignItems: 'center', }]}>
-                                <Image source={require('../../../assets/image/user3.jpg')} style={{ width: wp(13), height: wp(13), borderRadius: wp(13) }} />
+                                <Image source={{ uri: item.profileImage }} style={{ width: wp(13), height: wp(13), borderRadius: wp(13) }} />
                                 <View style={{ flexDirection: 'column' }}>
                                     <Text style={{ marginLeft: wp(2.2), paddingTop: hp(0.5), fontFamily: fontFamily.FONTS.Medium, fontSize: hp(2.2), color: COLORS.darkgray }} numberOfLines={1}>{item.name}</Text>
                                     <Text style={{ marginLeft: wp(2.2), fontFamily: fontFamily.FONTS.regular, fontSize: hp(1.8), color: COLORS.darkgray1 }} numberOfLines={1}>{item.message}</Text>
