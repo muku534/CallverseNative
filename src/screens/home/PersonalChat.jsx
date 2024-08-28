@@ -42,6 +42,7 @@ const PersonalChats = ({ navigation, route }) => {
     const [swipedMessageId, setSwipedMessageId] = useState(null);
     const [isTyping, setIsTyping] = useState(false);
     const [selectedMessageId, setSelectedMessageId] = useState(null);
+    const [messages, setMessages] = useState([]);
 
     // Function to handle long-press on messages
     const handleLongPress = (messageId) => {
@@ -91,17 +92,17 @@ const PersonalChats = ({ navigation, route }) => {
         const chatRoomId = userData.id < User.id
             ? `${userData.id}_${User.id}`
             : `${User.id}_${userData.id}`;
-    
+
         console.log("Chat Room ID:", chatRoomId); // Log chatRoomId for debugging
         console.log("Current User ID:", userData.id); // Log current user ID
         console.log("Other User ID:", User.id); // Log other user ID
-    
+
         chatRoomRef.current = db.collection('chatRooms').doc(chatRoomId);
-    
+
         const createChatRoom = async () => {
             try {
                 const docSnapshot = await chatRoomRef.current.get();
-    
+
                 if (!docSnapshot.exists) {
                     // Create the chat room with the correct 'users' array
                     await chatRoomRef.current.set({
@@ -121,14 +122,14 @@ const PersonalChats = ({ navigation, route }) => {
                 }
             }
         };
-    
+
         createChatRoom();
-    
+
         // Subscribe to FCM topic for real-time notifications
         messaging().subscribeToTopic(chatRoomId).catch((error) => {
             console.error('Error subscribing to topic:', error);
         });
-    
+
         // Cleanup: Unsubscribe from FCM topic when component unmounts
         return () => {
             messaging().unsubscribeFromTopic(chatRoomId).catch((error) => {
@@ -136,9 +137,6 @@ const PersonalChats = ({ navigation, route }) => {
             });
         };
     }, [User.id, userData.id]);
-    
-
-    const [messages, setMessages] = useState([]);
 
     const selectMedia = (type) => {
         let pickerOptions = {};
@@ -176,105 +174,73 @@ const PersonalChats = ({ navigation, route }) => {
         });
     };
 
-    // const generateVideoThumbnail = async (videoUri) => {
-    //     try {
-    //         const thumbnail = await createThumbnail({
-    //             url: videoUri,
-    //             timeStamp: 1000, // Specify the time in milliseconds for the thumbnail
-    //         });
-    //         return thumbnail.path;
-    //     } catch (e) {
-    //         console.error('Error generating video thumbnail:', e);
-    //         return null;
-    //     }
-    // };
+    // Fetch and listen to chat room messages
+    useEffect(() => {
+        if (!chatRoomRef.current) return;
 
-
-    // useEffect(() => {
-    //     const unsubscribe = chatRoomRef.current.collection('messages')
-    //         .orderBy('createdAt', 'desc')
-    //         .onSnapshot((snapshot) => {
-    //             const messages = snapshot.docs.map((doc) => {
-    //                 const data = doc.data();
-    //                 const { _id, text, image, videoThumbnail, video, audio, createdAt, user } = data;
-    //                 const message = {
-    //                     _id,
-    //                     text,
-    //                     image,
-    //                     videoThumbnail,
-    //                     video,
-    //                     audio,
-    //                     createdAt: createdAt ? createdAt.toDate() : new Date(), // Use the current date as a default value
-    //                     user: {
-    //                         ...user,
-    //                         _id: user._id, // Set the _id to the randomNumber of the user who sent the message
-    //                     },
-    //                 };
-    //                 return message;
-    //             });
-    //             setMessages((messages));
-    //             sendPushNotification(messages);
-    //         });
-
-    //     return () => unsubscribe();
-    // }, [User.randomNumber, userData.randomNumber]);
-
-
-    const onSend = useCallback((newMessages = []) => {
-        newMessages.forEach(async (message) => {
-            // Check if the message contains media
-            if (message.image) {
-                // Upload the media to Firebase Storage and get the download URL
-                const reference = storage().ref(message.image);
-                await reference.putFile(message.image);
-                const url = await reference.getDownloadURL();
-                console.log('Media URL:', url);
-
-                // Add the download URL to the message object
-                message.image = url;
-            } else if (message.video) {
-                // Upload the media to Firebase Storage and get the download URL
-                const reference = storage().ref(message.video);
-                await reference.putFile(message.video);
-                const url = await reference.getDownloadURL();
-                console.log('Media URL:', url);
-
-                // Add the download URL to the message object
-                message.video = url;
-            } else if (message.audio) {
-                // Upload the media to Firebase Storage and get the download URL
-                const reference = storage().ref(message.audio);
-                await reference.putFile(message.audio);
-                const url = await reference.getDownloadURL();
-                console.log('Media URL:', url);
-
-                // Add the download URL to the message object
-                message.audio = url;
-            }
-
-            // Check if userData is not null before trying to access its properties
-            if (userData) {
-                console.log(userData.name);
-
-                chatRoomRef.current.collection('messages').add({
-                    ...message,
-                    user: {
-                        _id: userData.randomNumber,
-                        name: userData.name,
-                        avatar: userData.photoUrl,
-                    },
-                    createdAt: firestore.FieldValue.serverTimestamp(),
-                });
+        const unsubscribe = chatRoomRef.current.onSnapshot((docSnapshot) => {
+            if (docSnapshot.exists) {
+                const data = docSnapshot.data();
+                if (data && data.messages && data.messages.length > 0) {
+                    const fetchedMessages = data.messages.map((message) => ({
+                        _id: message._id || '',  // Adjust if ID format is different
+                        text: message.text || '',
+                        image: message.image || null,
+                        video: message.video || null,
+                        audio: message.audio || null,
+                        createdAt: message.createdAt ? message.createdAt.toDate() : new Date(),
+                        user: message.user || {},
+                    }));
+                    setMessages(fetchedMessages);
+                } else {
+                    console.log('No messages found in the chat room.');
+                    setMessages([]);  // Set to empty if no messages
+                }
             } else {
-                console.error('userData is null');
+                console.log('Chat room does not exist.');
+                setMessages([]);
             }
+        }, (error) => {
+            console.error('Error fetching messages:', error);
         });
 
-        messages.forEach(message => {
-            console.log(message);
-        });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userData, userData.randomNumber]);
+        // Cleanup on component unmount
+        return () => unsubscribe();
+    }, [chatRoomRef.current]);
+
+
+    // Sending messages
+    const onSend = useCallback(async (newMessages = []) => {
+        try {
+            for (const message of newMessages) {
+                // Ensure userData is not null and add user info to the message
+                if (userData) {
+                    const textMessage = {
+                        _id: message._id || '',  // Generate a unique ID if necessary
+                        text: message.text || '',  // Ensure text is not undefined
+                        user: {
+                            _id: userData.randomNumber || '',  // Ensure the ID is not undefined
+                            name: userData.name || 'Unknown',  // Default to 'Unknown' if name is undefined
+                            avatar: userData.photoUrl || '',   // Default to empty string if photoUrl is undefined
+                        },
+                        createdAt: new Date(),  // Use a normal Date object for the timestamp
+                    };
+
+                    // Update Firestore directly using update() and arrayUnion()
+                    await chatRoomRef.current.update({
+                        messages: firestore.FieldValue.arrayUnion(textMessage),
+                    });
+                } else {
+                    console.error('userData is null');
+                    return; // Exit if userData is missing
+                }
+            }
+
+            console.log("Sent Messages:", newMessages);
+        } catch (error) {
+            console.error('Error sending message:', error);
+        }
+    }, [userData, chatRoomRef]);
 
     // Function to send push notifications for new messages
     const sendPushNotification = async (messages) => {
@@ -431,9 +397,9 @@ const PersonalChats = ({ navigation, route }) => {
 
     const renderBubble = (props) => {
         const { currentMessage } = props;
-        // console.log('Current Message:', currentMessage);
+        console.log('Current Message:', currentMessage);
         // Add debugging logs if needed
-        // console.log('Rendering bubble for currentMessage:', currentMessage.image);
+        console.log('Rendering bubble for currentMessage:', currentMessage.image);
 
 
 

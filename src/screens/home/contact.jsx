@@ -92,7 +92,7 @@ const Contacts = ({ navigation }) => {
                 <FlatList
                     data={filteredChats}
                     renderItem={({ item }) => (
-                        <TouchableOpacity onPress={() => navigation.navigate('PersonalChats', { User: item.otherUser })} onLongPress={() => handleLongPress(item)}>
+                        <TouchableOpacity onPress={() => navigation.navigate('PersonalChats', { User: item })} onLongPress={() => handleLongPress(item)}>
                             <View style={[item === selectedContact && styles.selectedContact, { flexDirection: 'row', padding: wp(2), alignItems: 'center', }]}>
                                 <Image source={{ uri: item.photoUrl }} style={{ width: wp(13), height: wp(13), borderRadius: wp(13) }} />
                                 <View style={{ flexDirection: 'column' }}>
