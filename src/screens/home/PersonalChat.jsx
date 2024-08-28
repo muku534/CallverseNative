@@ -1,10 +1,3 @@
-/* eslint-disable prettier/prettier */
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable prettier/prettier */
-/* eslint-disable react-native/no-inline-styles */
-/* eslint-disable prettier/prettier */
-/* eslint-disable no-unused-vars */
-/* eslint-disable prettier/prettier */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { SafeAreaView, StyleSheet, View, Text, TouchableOpacity, Image, ImageBackground, PanResponder, Animated } from 'react-native';
 import { GiftedChat, InputToolbar, Composer, Send, Actions, MessageContainer, MessageImage, Bubble, MessageAudio } from 'react-native-gifted-chat';
@@ -35,7 +28,9 @@ import { useSelector } from 'react-redux';
 const PersonalChats = ({ navigation, route }) => {
 
     const { User } = route.params;
+    console.log("user data from params", User.id)
     const userData = useSelector(state => state.userData)
+    console.log("userData from redux", userData.id)
     const chatRoomRef = useRef(null);
 
     const [isFullScreen, setIsFullScreen] = useState(false);
@@ -92,37 +87,56 @@ const PersonalChats = ({ navigation, route }) => {
     };
 
     useEffect(() => {
-        // console.log('Random Number:', User.randomNumber);
-        // console.log('Current user Number:', currentUserRandomNumber);
-
         const db = firestore();
-
-        // Assuming currentUserRandomNumber and UserRandomNumber are already defined
-        let chatRoomId = userData.randomNumber < User.randomNumber
-            ? userData.randomNumber + User.randomNumber
-            : User.randomNumber + userData.randomNumber;
-
-        // let chatRoomRef = db.collection('chatRooms').doc(chatRoomId);
+        const chatRoomId = userData.id < User.id
+            ? `${userData.id}_${User.id}`
+            : `${User.id}_${userData.id}`;
+    
+        console.log("Chat Room ID:", chatRoomId); // Log chatRoomId for debugging
+        console.log("Current User ID:", userData.id); // Log current user ID
+        console.log("Other User ID:", User.id); // Log other user ID
+    
         chatRoomRef.current = db.collection('chatRooms').doc(chatRoomId);
-
-        // chatRoomRef.get().then((docSnapshot) => {
-        //     if (!docSnapshot.exists) {
-        //         chatRoomRef.set({ /* default chatroom data */ });
-        //     }
-        // });
-        chatRoomRef.current.get().then((docSnapshot) => {
-            if (!docSnapshot.exists) {
-                chatRoomRef.current.set({ /* default chatroom data */ });
+    
+        const createChatRoom = async () => {
+            try {
+                const docSnapshot = await chatRoomRef.current.get();
+    
+                if (!docSnapshot.exists) {
+                    // Create the chat room with the correct 'users' array
+                    await chatRoomRef.current.set({
+                        createdAt: firestore.FieldValue.serverTimestamp(),
+                        users: [userData.id, User.id], // Ensure 'users' array is set
+                        messages: [],
+                    });
+                    console.log('Chat room created successfully');
+                } else {
+                    console.log('Chat room already exists');
+                }
+            } catch (error) {
+                if (error.code === 'firestore/permission-denied') {
+                    console.error('Permission denied. Please check Firestore rules.', error);
+                } else {
+                    console.error('Error fetching or creating chat room:', error);
+                }
             }
-        });
-        // Subscribe to FCM topics for real-time notifications
-        messaging().subscribeToTopic(chatRoomId);
-
-        return () => {
-            // Unsubscribe from FCM topics when component unmounts
-            messaging().unsubscribeFromTopic(chatRoomId);
         };
-    }, [User.randomNumber, userData.randomNumber]);
+    
+        createChatRoom();
+    
+        // Subscribe to FCM topic for real-time notifications
+        messaging().subscribeToTopic(chatRoomId).catch((error) => {
+            console.error('Error subscribing to topic:', error);
+        });
+    
+        // Cleanup: Unsubscribe from FCM topic when component unmounts
+        return () => {
+            messaging().unsubscribeFromTopic(chatRoomId).catch((error) => {
+                console.error('Error unsubscribing from topic:', error);
+            });
+        };
+    }, [User.id, userData.id]);
+    
 
     const [messages, setMessages] = useState([]);
 
@@ -162,48 +176,48 @@ const PersonalChats = ({ navigation, route }) => {
         });
     };
 
-    const generateVideoThumbnail = async (videoUri) => {
-        try {
-            const thumbnail = await createThumbnail({
-                url: videoUri,
-                timeStamp: 1000, // Specify the time in milliseconds for the thumbnail
-            });
-            return thumbnail.path;
-        } catch (e) {
-            console.error('Error generating video thumbnail:', e);
-            return null;
-        }
-    };
+    // const generateVideoThumbnail = async (videoUri) => {
+    //     try {
+    //         const thumbnail = await createThumbnail({
+    //             url: videoUri,
+    //             timeStamp: 1000, // Specify the time in milliseconds for the thumbnail
+    //         });
+    //         return thumbnail.path;
+    //     } catch (e) {
+    //         console.error('Error generating video thumbnail:', e);
+    //         return null;
+    //     }
+    // };
 
 
-    useEffect(() => {
-        const unsubscribe = chatRoomRef.current.collection('messages')
-            .orderBy('createdAt', 'desc')
-            .onSnapshot((snapshot) => {
-                const messages = snapshot.docs.map((doc) => {
-                    const data = doc.data();
-                    const { _id, text, image, videoThumbnail, video, audio, createdAt, user } = data;
-                    const message = {
-                        _id,
-                        text,
-                        image,
-                        videoThumbnail,
-                        video,
-                        audio,
-                        createdAt: createdAt ? createdAt.toDate() : new Date(), // Use the current date as a default value
-                        user: {
-                            ...user,
-                            _id: user._id, // Set the _id to the randomNumber of the user who sent the message
-                        },
-                    };
-                    return message;
-                });
-                setMessages((messages));
-                sendPushNotification(messages);
-            });
+    // useEffect(() => {
+    //     const unsubscribe = chatRoomRef.current.collection('messages')
+    //         .orderBy('createdAt', 'desc')
+    //         .onSnapshot((snapshot) => {
+    //             const messages = snapshot.docs.map((doc) => {
+    //                 const data = doc.data();
+    //                 const { _id, text, image, videoThumbnail, video, audio, createdAt, user } = data;
+    //                 const message = {
+    //                     _id,
+    //                     text,
+    //                     image,
+    //                     videoThumbnail,
+    //                     video,
+    //                     audio,
+    //                     createdAt: createdAt ? createdAt.toDate() : new Date(), // Use the current date as a default value
+    //                     user: {
+    //                         ...user,
+    //                         _id: user._id, // Set the _id to the randomNumber of the user who sent the message
+    //                     },
+    //                 };
+    //                 return message;
+    //             });
+    //             setMessages((messages));
+    //             sendPushNotification(messages);
+    //         });
 
-        return () => unsubscribe();
-    }, [User.randomNumber, userData.randomNumber]);
+    //     return () => unsubscribe();
+    // }, [User.randomNumber, userData.randomNumber]);
 
 
     const onSend = useCallback((newMessages = []) => {
@@ -247,7 +261,7 @@ const PersonalChats = ({ navigation, route }) => {
                     user: {
                         _id: userData.randomNumber,
                         name: userData.name,
-                        avatar: userData.profileImage,
+                        avatar: userData.photoUrl,
                     },
                     createdAt: firestore.FieldValue.serverTimestamp(),
                 });
@@ -516,7 +530,160 @@ const PersonalChats = ({ navigation, route }) => {
     return (
         <ImageBackground source={require('../../../assets/image/wallpaper.webp')}
             style={{ flex: 1 }} resizeMode="cover">
-          
+            <SafeAreaView style={{ flex: 1 }}>
+                <View style={{ flex: 1 }}>
+                    {isFullScreen ? (
+                        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+                            <TouchableOpacity onPress={closeFullScreen} style={{ position: 'absolute', top: hp(1), right: wp(3), zIndex: 999 }}>
+                                <AntDesign name="closecircle" size={hp(4)} color={COLORS.white} />
+                            </TouchableOpacity>
+                            <Animated.View {...panResponder.panHandlers} style={{ flex: 1 }}>
+                                <Video
+                                    source={{ uri: selectedVideo }}
+                                    style={{ width: '100%', height: '100%' }}
+                                    controls={true}
+                                    fullscreen={true}
+                                />
+                            </Animated.View>
+                        </View>
+
+
+                    ) : (
+                        <>
+
+                            <View
+                                style={styles.header}
+                            >
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <TouchableOpacity
+                                        onPress={() => navigation.goBack()}
+                                        style={{ marginLeft: -10 }}
+                                    >
+                                        <AntDesign
+                                            name="arrowleft"
+                                            size={24}
+                                            style={{ color: COLORS.secondaryWhite }}
+                                        />
+                                    </TouchableOpacity>
+                                    <Image
+                                        source={{ uri: User.photoUrl }}
+                                        style={{
+                                            height: wp(10),
+                                            width: wp(10),
+                                            borderRadius: wp(10),
+                                            marginLeft: 5,
+                                        }}
+                                    />
+
+                                    <Text style={{ marginLeft: wp(2), color: COLORS.secondaryWhite, fontFamily: fontFamily.FONTS.regular, fontSize: hp(2.5) }}>{User.name}</Text>
+                                </View>
+                                {selectedMessageId ? null : ( // Render icons only if no message is selected
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        <TouchableOpacity style={{ marginRight: wp(5) }}>
+                                            <Ionicons name="videocam" size={22} style={{ color: COLORS.secondaryWhite }} />
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={{ marginRight: wp(5) }} onPress={() => navigation.navigate('VoiceCall', { UserData: User })}>
+                                            <MaterialIcons name="call" size={22} style={{ color: COLORS.secondaryWhite }} />
+                                        </TouchableOpacity>
+                                        <TouchableOpacity>
+                                            <Entypo name="dots-three-vertical" size={22} style={{ color: COLORS.secondaryWhite }} />
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                                {selectedMessageId ? ( // Render delete icon only if a message is selected
+                                    <TouchableOpacity onPress={deleteSelectedMessage}>
+                                        <FontAwesome name="trash-o" size={22} color="white" />
+                                    </TouchableOpacity>
+                                ) : null}
+                            </View>
+
+
+                            <GiftedChat
+                                messages={messages}
+                                onSend={newMessages => onSend(newMessages)}
+                                user={{
+                                    _id: userData.id, // This should be the current user's ID
+                                }}
+                                alwaysShowSend
+                                renderSend={renderSend}
+                                renderActions={renderActions}
+                                renderInputToolbar={renderInputToolbar}
+                                renderBubble={renderBubble}
+
+                                renderMessageAudio={props => {
+                                    // const { currentMessage } = props;
+                                    return (
+                                        <Video
+                                            source={AudioFile}
+                                            style={{ width: 100, height: 50 }}
+                                            controls={true}
+                                        />
+                                    );
+                                }}
+                                renderMessageVideo={props => {
+                                    const { currentMessage } = props;
+                                    return (
+                                        <TouchableOpacity onPress={() => toggleFullScreen(currentMessage.video)}>
+                                            <View style={{
+                                                width: wp(70),
+                                                height: hp(20),
+                                                borderRadius: wp(4),
+                                                borderTopRightRadius: wp(0),
+                                                borderBottomRightRadius: wp(6),
+                                                borderTopLeftRadius: wp(4),
+                                                borderBottomLeftRadius: wp(0),
+                                                overflow: 'hidden', // Ensure the play icon is not overflowing
+                                            }}>
+                                                <Image
+                                                    source={{ uri: currentMessage.videoThumbnail }}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        position: 'absolute',
+                                                    }}
+                                                />
+                                                <TouchableOpacity
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: '50%',
+                                                        left: '50%',
+                                                        transform: [{ translateX: -15 }, { translateY: -20 }], // Center the play icon
+                                                    }}
+                                                    onPress={() => toggleFullScreen(currentMessage.video)}
+                                                >
+                                                    <FontAwesome name="play-circle" size={hp(6)} color="white" />
+                                                </TouchableOpacity>
+                                            </View>
+                                        </TouchableOpacity>
+                                    );
+                                }}
+                                isTyping={messages.some(message => message.user._id !== userData.id && message.isTyping)}
+                                onInputTextChanged={handleTyping}
+                                scrollToBottom
+                                showAvatarForEveryMessage={true}
+                                renderUsernameOnMessage={true}
+                                onLongPress={handleLongPress}
+                                onMoveShouldSetPanResponderCapture={true}
+                                textInputStyle={{
+                                    borderRadius: wp(8),
+                                    shadowColor: '#000',
+                                    shadowOffset: { width: 0, height: 2 },
+                                    shadowOpacity: 0.25,
+                                    shadowRadius: 3.84,
+                                    elevation: 0.4,
+                                    marginRight: wp(1),
+                                    paddingHorizontal: wp(3),
+                                    backgroundColor: COLORS.white,
+                                    color: COLORS.black,
+                                }}
+                                timeTextStyle={{ left: { color: COLORS.secondaryBlack }, right: { color: COLORS.secondaryBlack } }}
+                                style={{ backgroundColor: COLORS.secondaryBlack }}
+                            // inverted={false} // Add this li
+                            />
+                        </>
+                    )}
+                </View>
+            </SafeAreaView>
         </ImageBackground>
     );
 };
@@ -525,55 +692,55 @@ export default PersonalChats;
 
 const styles = StyleSheet.create({
     header: {
-        // flexDirection: 'row',
-        // justifyContent: 'space-between',
-        // // paddingHorizontal: wp(4),
-        // // backgroundColor: COLORS.lightGreen,
-        // height: hp(7.5),
-        // shadowColor: '#000',
-        // shadowOffset: { width: 0, height: 2 },
-        // shadowOpacity: 0.25,
-        // shadowRadius: 3.84,
-        // elevation: 1,
-        // alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: wp(4),
+        backgroundColor: COLORS.lightGreen,
+        height: hp(7.5),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 1,
+        alignItems: 'center',
     },
     inputToolbar: {
-        // borderRadius: 22,
-        // borderWidth: 1,
-        // borderColor: COLORS.gray,
-        // marginRight: 6,
-        // paddingHorizontal: 12,
-        // backgroundColor: COLORS.white,
-        // color: COLORS.black,
+        borderRadius: 22,
+        borderWidth: 1,
+        borderColor: COLORS.gray,
+        marginRight: 6,
+        paddingHorizontal: 12,
+        backgroundColor: COLORS.white,
+        color: COLORS.black,
     },
     inputToolbarPrimary: {
-        // backgroundColor: '#FFF',
+        backgroundColor: '#FFF',
     },
     textInput: {
-        // fontFamily: fontFamily.FONTS.regular,
-        // fontSize: hp(2),
-        // paddingHorizontal: wp(2),
+        fontFamily: fontFamily.FONTS.regular,
+        fontSize: hp(2),
+        paddingHorizontal: wp(2),
     },
     sendButtonContainer: {
-        // height: 42,
-        // alignItems: 'center',
-        // justifyContent: 'center',
-        // width: 45,
-        // borderRadius: 30,
-        // borderWidth: 1,
-        // borderColor: COLORS.gray,
-        // backgroundColor: COLORS.darkGreeen,
-        // marginRight: 10,
-        // // marginBottom: 5,
+        height: 42,
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 45,
+        borderRadius: 30,
+        borderWidth: 1,
+        borderColor: COLORS.gray,
+        backgroundColor: COLORS.darkGreeen,
+        marginRight: 10,
+        // marginBottom: 5,
     },
     sendButtonText: {
-        // color: COLORS.primary,
-        // fontWeight: 'bold',
+        color: COLORS.primary,
+        fontWeight: 'bold',
     },
     replyComponent: {
-        // backgroundColor: 'white',
-        // padding: 10,
-        // borderRadius: 10,
-        // marginTop: 10,
+        backgroundColor: 'white',
+        padding: 10,
+        borderRadius: 10,
+        marginTop: 10,
     },
 });
