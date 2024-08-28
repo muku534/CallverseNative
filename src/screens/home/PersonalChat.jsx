@@ -568,7 +568,7 @@ const PersonalChats = ({ navigation, route }) => {
                                 messages={messages}
                                 onSend={newMessages => onSend(newMessages)}
                                 user={{
-                                    _id: userData.id, // This should be the current user's ID
+                                    _id: userData.randomNumber, // This should be the current user's ID
                                 }}
                                 alwaysShowSend
                                 renderSend={renderSend}
@@ -644,7 +644,7 @@ const PersonalChats = ({ navigation, route }) => {
                                 }}
                                 timeTextStyle={{ left: { color: COLORS.secondaryBlack }, right: { color: COLORS.secondaryBlack } }}
                                 style={{ backgroundColor: COLORS.secondaryBlack }}
-                            // inverted={false} // Add this li
+                                inverted={false} // Add this li
                             />
                         </>
                     )}
