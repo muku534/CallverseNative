@@ -17,6 +17,7 @@ import { COLORS } from './constants';
 import AddProfile from './src/screens/home/AddProfile';
 import Contacts from './src/screens/home/contact';
 import Chats from './src/screens/home/Chat';
+import VoiceCall from './src/screens/home/VoiceCall'
 import Profile from './src/screens/home/Profile';
 import { Provider } from 'react-redux';
 import store from './src/redux/store';
@@ -89,8 +90,9 @@ function App() {
             <Stack.Screen name="TabStack" component={TabStack} options={{ headerShown: false }} />
             <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
             <Stack.Screen name="AddProfile" component={AddProfile} options={{ headerShown: false }} />
-            <Stack.Screen name="AddContact" component={AddContact} options={{ headerShown: false }} />
+            <Stack.Screen name="AddContact" component={AddContact} options={{ headerShown: true }} />
             <Stack.Screen name="PersonalChats" component={PersonalChats} options={{ headerShown: false }} />
+            <Stack.Screen name="VoiceCall" component={VoiceCall} options={{ headerShown: false }} />
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>
