@@ -28,11 +28,12 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { firebase } from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import messaging from '@react-native-firebase/messaging';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../redux/action';
 
 
 const Profile = ({ navigation }) => {
+    const dispatch = useDispatch();
     const [showMenu, setShowMenu] = useState(false);
     const userData = useSelector(state => state.userData)
 
@@ -120,10 +121,10 @@ const Profile = ({ navigation }) => {
                         <Text style={styles.randomNumber}> {userData?.randomNumber} </Text>
                     </View>
 
-                    <TouchableOpacity onPress={() => navigation.navigate('AddProfile')} style={styles.rightArrow}>
+                   {/** <TouchableOpacity onPress={() => navigation.navigate('AddProfile')} style={styles.rightArrow}>
                         <MaterialIcons name="keyboard-arrow-right" size={24}
                             color={COLORS.black} />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
                 <View style={styles.menuContainer}>
                     <TouchableOpacity onPress={() => navigation.navigate('AddProfile')}

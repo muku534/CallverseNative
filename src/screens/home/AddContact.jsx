@@ -57,14 +57,14 @@ const AddContact = ({ navigation }) => {
 
                 // Extract the fields you need
                 const uid = userDoc.id;
-                const { profileImage, email } = contactData;
+                const { photoUrl, email } = contactData;
 
                 // Log the results for debugging
                 console.log('User ID:', uid);
                 console.log('User Data:', contactData);
 
                 // Return the user data along with the document ID
-                return { uid, profileImage, email };
+                return { uid, photoUrl, email };
             } else {
                 Alert.alert('User not found');
                 return null;
@@ -78,11 +78,6 @@ const AddContact = ({ navigation }) => {
 
 
     const saveContact = async () => {
-        if (!userData || !userData.id) {
-            Alert.alert('User not found');
-            return;
-        }
-
         try {
             // Check if the phone number exists in the Users collection
             const existingUserData = await checkUserByPhoneNumber(phoneNumber);
@@ -91,9 +86,10 @@ const AddContact = ({ navigation }) => {
                 // If user exists, get their data
                 console.log("existingUserData", existingUserData)
                 const newContact = {
+                    id: existingUserData.uid,
                     name: contactName,
                     randomNumber: phoneNumber,
-                    profileImage: existingUserData.profileImage, // Use the found user's photoUrl
+                    photoUrl: existingUserData.photoUrl, // Use the found user's photoUrl
                     email: existingUserData.email, // You can store more data if needed
                 };
 
