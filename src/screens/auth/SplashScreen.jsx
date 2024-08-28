@@ -64,7 +64,6 @@ const SplashScreen = ({ navigation }) => {
                 const contacts = doc.data().contacts;
                 dispatch(fetchContacts(contacts));
                 console.log('Contacts fetched:', contacts);
-                await getChats(userId)
             } else {
                 console.error('Contacts not found');
             }
@@ -76,23 +75,52 @@ const SplashScreen = ({ navigation }) => {
     const getChats = async (userId) => {
         try {
             if (!userId) {
-                console.error('No userData found');
+                console.error('No userId found');
                 return;
             }
 
-            const chatsRef = firestore().collection('chatRooms').doc(userId);
-            const doc = await chatsRef.get();
-            if (doc.exists) {
-                const chats = doc.data().chats;
+            // Query for chat rooms where the user's ID is in the 'users' array
+            const chatsRef = firestore().collection('chatRooms');
+            const snapshot = await chatsRef.where('users', 'array-contains', userId).get();
+
+            if (!snapshot.empty) {
+                // Extract chats from each document
+                const chats = await Promise.all(snapshot.docs.map(async (doc) => {
+                    const data = doc.data();
+                    console.log('Document data:', data); // Debugging line
+
+                    // Determine the other user's ID
+                    const otherUserId = data.users.find(id => id !== userId);
+                    let otherUserData = {};
+
+                    if (otherUserId) {
+                        // Fetch other user data from Users collection
+                        const userDoc = await firestore().collection('Users').doc(otherUserId).get();
+                        otherUserData = userDoc.data() || {};
+                    }
+
+                    // Return an object with chat details including other user information
+                    return {
+                        id: doc.id,
+                        createdAt: data.createdAt,
+                        messages: data.messages || [], // Ensure to return an empty array if 'messages' is undefined
+                        otherUser: otherUserData // Include other user data
+                    };
+                }));
+
+                // Dispatch the fetched chats
                 dispatch(fetchChats(chats));
                 console.log('Chats fetched:', chats);
             } else {
-                console.error('Chats not found');
+                console.error('No chats found for this user');
             }
         } catch (error) {
-            console.error('Error fetching Chats:', error);
+            console.error('Error fetching chats:', error);
         }
     };
+
+
+
 
 
     useEffect(() => {
@@ -105,6 +133,7 @@ const SplashScreen = ({ navigation }) => {
 
                     // Fetch user data from Firestore or cache
                     await fetchUserData(userId);
+                    await getChats(userId)
 
                     // // Navigate to the home screen or other protected screens
                     navigation.dispatch(

@@ -1,10 +1,3 @@
-/* eslint-disable prettier/prettier */
-/* eslint-disable react/no-unstable-nested-components */
-/* eslint-disable prettier/prettier */
-/* eslint-disable react-native/no-inline-styles */
-/* eslint-disable prettier/prettier */
-/* eslint-disable no-unused-vars */
-/* eslint-disable prettier/prettier */
 import { SafeAreaView, StatusBar, StyleSheet, TouchableOpacity, TextInput, Text, View, Image, FlatList } from 'react-native';
 import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { COLORS } from '../../../constants';
@@ -13,25 +6,95 @@ import {
     widthPercentageToDP as wp,
 } from '../../Components/Pixel/Index';
 import fontFamily from '../../../constants/fontFamily';
-import user1Image from '../../../assets/image/user1.jpg';
-import user2Image from '../../../assets/image/user2.jpg';
-import user3Image from '../../../assets/image/user3.jpg';
-import user4Image from '../../../assets/image/user4.jpg';
-import user5Image from '../../../assets/image/user5.jpg';
-import user6Image from '../../../assets/image/user6.jpg';
-import user7Image from '../../../assets/image/user7.jpg';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Iconics from 'react-native-vector-icons/Ionicons';
 import firestore from '@react-native-firebase/firestore';
 import Entypo from 'react-native-vector-icons/Entypo';
+import { useDispatch, useSelector } from 'react-redux';
 
 const Chats = ({ navigation }) => {
 
     const [searchVisible, setSearchVisible] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [filteredChats, setFilteredChats] = useState([]);
- 
+    const [updatedChats, setUpdatedChats] = useState([]);
+
+    const dispatch = useDispatch();
+    const Chats = useSelector(state => state.chats);
+    const storedContacts = useSelector(state => state.contacts);
+
+    useEffect(() => {
+        // Log initial data from Redux
+        console.log("Initial Chats from Redux:", Chats);
+        console.log("Contacts from Redux:", storedContacts);
+
+        // Fetch user details for each chat
+        const fetchUserDetails = async () => {
+            console.log("Fetching user details...");
+
+            const updatedChats = await Promise.all(Chats.map(async chat => {
+                console.log(`Processing chat ID: ${chat.id}, Other User ID: ${chat.otherUser.id}`);
+
+                // Use storedContacts directly instead of contacts state
+                const contact = storedContacts.find(contact => contact.id === chat.otherUser.id);
+                if (contact) {
+                    console.log("Contact found in Redux contacts:", contact);
+                    return {
+                        ...chat,
+                        otherUser: {
+                            ...contact,
+                            createdAt: contact.createdAt ? contact.createdAt.toDate() : null // Adjust if needed
+                        }
+                    }; // Use contact details
+                } else {
+                    console.log("Contact not found, fetching from Firestore...");
+                    try {
+                        const userDoc = await firestore().collection('Users').doc(chat.otherUser.id).get();
+
+                        if (userDoc.exists) {
+                            const userData = userDoc.data();
+                            console.log("User data fetched from Firestore:", userData);
+                            return {
+                                ...chat,
+                                otherUser: {
+                                    ...userData,
+                                    createdAt: userData.createdAt.toDate(), // Adjust based on your timestamp handling
+                                }
+                            };
+                        } else {
+                            console.log("User document does not exist in Firestore.");
+                            return chat;
+                        }
+                    } catch (error) {
+                        console.error("Error fetching user details:", error);
+                        return chat;
+                    }
+                }
+            }));
+            console.log("Updated Chats after fetching user details:", updatedChats);
+
+            setUpdatedChats(updatedChats);
+            // Dispatch updated chats to Redux if needed
+            // dispatch({ type: 'UPDATE_CHATS', payload: updatedChats });
+        };
+
+        fetchUserDetails();
+    }, [Chats, storedContacts, dispatch]); // Use storedContacts in dependencies
+
+
+    useEffect(() => {
+        // Filter chats based on search text
+        const filterChats = () => {
+            const filtered = Chats.filter(chat => {
+                const userName = chat.otherUser.displayName ? chat.otherUser.displayName.toLowerCase() : '';
+                return userName.includes(searchText.toLowerCase());
+            });
+            setFilteredChats(filtered);
+        };
+
+        filterChats();
+    }, [searchText, Chats]);
+
     const clearSearch = () => {
         setSearchText('');
     };
@@ -74,6 +137,29 @@ const Chats = ({ navigation }) => {
                     </TouchableOpacity>
                 </View>
             )}
+
+            <View style={{ marginVertical: hp(1) }}>
+                <FlatList
+                    data={updatedChats}
+                    keyExtractor={item => item.id}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity onPress={() => navigation.navigate('PersonalChats', { User: item.otherUser })} onLongPress={() => handleLongPress(item)}>
+                            <View style={{ flexDirection: 'row', padding: wp(2), alignItems: 'center', }}>
+                                <Image source={{ uri: item.otherUser.photoUrl }} style={{ width: wp(13), height: wp(13), borderRadius: wp(13) }} />
+                                <View style={{ flexDirection: 'column' }}>
+                                    <Text style={{ marginLeft: wp(2.2), paddingTop: hp(0.5), fontFamily: fontFamily.FONTS.Medium, fontSize: hp(2.2), color: COLORS.darkgray }} numberOfLines={1}>{item.otherUser.name}</Text>
+                                    <Text style={{ marginLeft: wp(2.2), fontFamily: fontFamily.FONTS.regular, fontSize: hp(1.8), color: COLORS.darkgray1 }} numberOfLines={1}>{item.message}</Text>
+                                </View>
+                            </View>
+                        </TouchableOpacity>
+                    )}
+                    ListEmptyComponent={() => (
+                        <View style={{ flex: 1, marginVertical: hp(30), justifyContent: 'center', alignItems: 'center' }}>
+                            <Text style={{ fontSize: hp(2.2), padding: hp(1.5), color: COLORS.secondaryGray }}>you dont have any contacts add contact click on the + button </Text>
+                        </View>
+                    )}
+                />
+            </View>
 
         </SafeAreaView>
     );
