@@ -30,7 +30,7 @@ import storage from '@react-native-firebase/storage';
 import messaging from '@react-native-firebase/messaging';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../redux/action';
-
+import AndroidOpenSettings from 'react-native-android-open-settings'
 
 const Profile = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -121,7 +121,7 @@ const Profile = ({ navigation }) => {
                         <Text style={styles.randomNumber}> {userData?.randomNumber} </Text>
                     </View>
 
-                   {/** <TouchableOpacity onPress={() => navigation.navigate('AddProfile')} style={styles.rightArrow}>
+                    {/** <TouchableOpacity onPress={() => navigation.navigate('AddProfile')} style={styles.rightArrow}>
                         <MaterialIcons name="keyboard-arrow-right" size={24}
                             color={COLORS.black} />
                     </TouchableOpacity> */}
@@ -198,9 +198,7 @@ const Profile = ({ navigation }) => {
                         </TouchableOpacity>
                     </Modal>
 
-                    <TouchableOpacity onPress={() => {
-                        Linking.openSettings();
-                    }}
+                    <TouchableOpacity onPress={() => AndroidOpenSettings.appNotificationSettings()}
                         style={styles.TouchableOpacity}
                     >
                         <View style={styles.menuItems}>
@@ -236,9 +234,7 @@ const Profile = ({ navigation }) => {
                             color={COLORS.black} />
                     </TouchableOpacity>
 
-                    <TouchableOpacity onPress={() => {
-                        Linking.openSettings();
-                    }}
+                    <TouchableOpacity onPress={() => AndroidOpenSettings.appDetailsSettings()}
                         style={styles.TouchableOpacity}
                     >
                         <View style={styles.menuItems}>
@@ -311,7 +307,7 @@ const Profile = ({ navigation }) => {
                     </TouchableOpacity>
                 </View>
             </View>
-        </SafeAreaView>
+        </SafeAreaView >
     );
 };
 
