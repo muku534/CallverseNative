@@ -5,8 +5,8 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable no-unused-vars */
 /* eslint-disable prettier/prettier */
-import { SafeAreaView, StatusBar, StyleSheet, Text, View, Image, TextInput, TouchableOpacity, FlatList, RefreshControl, ScrollView } from 'react-native';
-import React, { useState, useEffect, useCallback } from 'react';
+import { SafeAreaView, StatusBar, StyleSheet, Text, View, Image, TextInput, TouchableOpacity, FlatList, } from 'react-native';
+import React, { useState, useEffect, } from 'react';
 import { COLORS } from '../../../constants';
 import {
     heightPercentageToDP as hp,
@@ -16,10 +16,7 @@ import fontFamily from '../../../constants/fontFamily';
 import Iconics from 'react-native-vector-icons/Ionicons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Entypo from 'react-native-vector-icons/Entypo';
-import firestore from '@react-native-firebase/firestore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { fetchContact, fetchContacts } from '../../redux/action';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 
 
 const Contacts = ({ navigation }) => {
@@ -54,12 +51,12 @@ const Contacts = ({ navigation }) => {
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
-            <StatusBar backgroundColor={COLORS.lightGreen} barStyle="light-content" />
+            <StatusBar backgroundColor={'#f2f2f2'} barStyle="dark-content" />
 
             {searchVisible ? (
-                <View style={{ backgroundColor: COLORS.lightGreen, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 7 }}>
+                <View style={{}}>
                     <View style={{ width: '90%', marginVertical: hp(1), marginHorizontal: wp(5), flexDirection: 'row', justifyContent: 'center', backgroundColor: '#e8e8e8', borderRadius: wp(4) }}>
-                        <TouchableOpacity onPress={toggelInput} style={{ marginLeft: wp(10) }}>
+                        <TouchableOpacity onPress={toggelInput} style={{ marginLeft: wp(10) }} activeOpacity={0.7}>
                             <AntDesign name="arrowleft" size={hp(3)} color={COLORS.black} style={{ position: 'absolute', left: 10, top: 10 }} />
                         </TouchableOpacity>
                         <TextInput
@@ -79,10 +76,15 @@ const Contacts = ({ navigation }) => {
                     </View>
                 </View>
             ) : (
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: COLORS.lightGreen, height: hp(8), padding: wp(3), shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 4 }}>
-                    <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.tertiaryWhite, fontSize: hp(2.5), fontWeight: '700' }}>CallVerse</Text>
-                    <TouchableOpacity onPress={toggelInput}>
-                        <Iconics name="search" size={hp(3)} color={COLORS.white} />
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: hp(6), padding: wp(2), }}>
+                    <View>
+                        <TouchableOpacity onPress={() => navigation.goBack()} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <AntDesign name="arrowleft" size={hp(3)} color={COLORS.black} />
+                            <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.darkgray, fontSize: hp(2.8), fontWeight: '700', marginHorizontal: wp(2) }}>Contacts</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <TouchableOpacity onPress={toggelInput} style={{ marginHorizontal: wp(2.3) }}>
+                        <Iconics name="search" size={hp(3.3)} color={COLORS.darkgray} />
                     </TouchableOpacity>
                 </View>
             )}
@@ -93,7 +95,7 @@ const Contacts = ({ navigation }) => {
                     data={filteredChats}
                     renderItem={({ item }) => (
                         <TouchableOpacity onPress={() => navigation.navigate('PersonalChats', { User: item })} onLongPress={() => handleLongPress(item)}>
-                            <View style={[item === selectedContact && styles.selectedContact, { flexDirection: 'row', padding: wp(2), alignItems: 'center', }]}>
+                            <View style={[item === selectedContact && styles.selectedContact, { flexDirection: 'row', padding: wp(2), alignItems: 'center', marginHorizontal: wp(2.3) }]}>
                                 <Image source={{ uri: item.photoUrl }} style={{ width: wp(13), height: wp(13), borderRadius: wp(13) }} />
                                 <View style={{ flexDirection: 'column' }}>
                                     <Text style={{ marginLeft: wp(2.2), paddingTop: hp(0.5), fontFamily: fontFamily.FONTS.Medium, fontSize: hp(2.2), color: COLORS.darkgray }} numberOfLines={1}>{item.name}</Text>
@@ -112,7 +114,7 @@ const Contacts = ({ navigation }) => {
             </View>
 
 
-            <TouchableOpacity
+            {/** <TouchableOpacity
                 style={{
                     position: 'absolute',
                     width: wp(14),
@@ -128,7 +130,7 @@ const Contacts = ({ navigation }) => {
                 onPress={() => navigation.navigate('AddContact')}
             >
                 <Iconics name="person-add" size={hp(3)} color={COLORS.white} />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
         </SafeAreaView>
     );
 };

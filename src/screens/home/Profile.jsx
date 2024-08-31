@@ -31,6 +31,7 @@ import messaging from '@react-native-firebase/messaging';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../redux/action';
 import AndroidOpenSettings from 'react-native-android-open-settings'
+import { CommonActions } from '@react-navigation/native';
 
 const Profile = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -99,9 +100,9 @@ const Profile = ({ navigation }) => {
 
     return (
         <SafeAreaView style={{ flex: 1, }}>
-            <StatusBar backgroundColor={COLORS.lightGreen} barStyle="light-content" />
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: COLORS.lightGreen, height: hp(8), padding: wp(3), shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 4 }}>
-                <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.tertiaryWhite, fontSize: hp(2.5), fontWeight: '700' }}>Settings</Text>
+            <StatusBar backgroundColor={'#f2f2f2'} barStyle="dark-content" />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: hp(8), padding: wp(3), }}>
+                <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.darkgray, fontSize: hp(2.8), fontWeight: '700' }}>Settings</Text>
             </View>
 
             <View style={styles.container}>
@@ -127,43 +128,9 @@ const Profile = ({ navigation }) => {
                     </TouchableOpacity> */}
                 </View>
                 <View style={styles.menuContainer}>
-                    <TouchableOpacity onPress={() => navigation.navigate('AddProfile')}
-                        style={styles.TouchableOpacity}
-                    >
-                        <View style={styles.menuItems}>
-                            <AntDesign name="user"
-                                size={24}
-                                color={COLORS.black} />
-                            <Text style={styles.menuText}>
-                                Account
-                            </Text>
-                        </View>
-                        <MaterialIcons
-                            name="keyboard-arrow-right"
-                            size={24}
-                            color={COLORS.black} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity onPress={() => navigation.navigate('Chats')}
-                        style={styles.TouchableOpacity}
-                    >
-                        <View style={styles.menuItems}>
-                            <Ionicons
-                                name="chatbubble-ellipses-outline"
-                                size={24}
-                                color={COLORS.black} />
-                            <Text style={styles.menuText}>
-                                Chat
-                            </Text>
-                        </View>
-                        <MaterialIcons
-                            name="keyboard-arrow-right"
-                            size={24}
-                            color={COLORS.black} />
-                    </TouchableOpacity>
-
                     <TouchableOpacity onPress={toggleMenu}
                         style={styles.TouchableOpacity}
+                        activeOpacity={0.7}
                     >
                         <View style={styles.menuItems}>
                             <Entypo name="light-down"
@@ -173,9 +140,9 @@ const Profile = ({ navigation }) => {
                                 Appearance
                             </Text>
                         </View>
-                        <MaterialIcons
-                            name="keyboard-arrow-right"
-                            size={24}
+                        <AntDesign
+                            name="caretright"
+                            size={hp(2.5)}
                             color={COLORS.black} />
                     </TouchableOpacity>
 
@@ -183,6 +150,7 @@ const Profile = ({ navigation }) => {
                         <TouchableOpacity
                             style={styles.model}
                             onPress={toggleMenu}
+                            activeOpacity={0.7}
                         >
                             <View style={{
                                 backgroundColor: COLORS.white, borderRadius: wp(2), padding: hp(3), width: wp(60),
@@ -200,6 +168,7 @@ const Profile = ({ navigation }) => {
 
                     <TouchableOpacity onPress={() => AndroidOpenSettings.appNotificationSettings()}
                         style={styles.TouchableOpacity}
+                        activeOpacity={0.7}
                     >
                         <View style={styles.menuItems}>
                             <Ionicons name="notifications-outline"
@@ -209,9 +178,9 @@ const Profile = ({ navigation }) => {
                                 Notifications
                             </Text>
                         </View>
-                        <MaterialIcons
-                            name="keyboard-arrow-right"
-                            size={24}
+                        <AntDesign
+                            name="caretright"
+                            size={hp(2.5)}
                             color={COLORS.black} />
                     </TouchableOpacity>
 
@@ -219,6 +188,7 @@ const Profile = ({ navigation }) => {
                         console.log('presser');
                     }}
                         style={styles.TouchableOpacity}
+                        activeOpacity={0.7}
                     >
                         <View style={styles.menuItems}>
                             <MaterialCommunityIcons name="shield-lock-open-outline"
@@ -228,14 +198,15 @@ const Profile = ({ navigation }) => {
                                 Privacy
                             </Text>
                         </View>
-                        <MaterialIcons
-                            name="keyboard-arrow-right"
-                            size={24}
+                        <AntDesign
+                            name="caretright"
+                            size={hp(2.5)}
                             color={COLORS.black} />
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={() => AndroidOpenSettings.appDetailsSettings()}
                         style={styles.TouchableOpacity}
+                        activeOpacity={0.7}
                     >
                         <View style={styles.menuItems}>
                             <AntDesign name="folder1"
@@ -245,9 +216,9 @@ const Profile = ({ navigation }) => {
                                 Data usage
                             </Text>
                         </View>
-                        <MaterialIcons
-                            name="keyboard-arrow-right"
-                            size={24}
+                        <AntDesign
+                            name="caretright"
+                            size={hp(2.5)}
                             color={COLORS.black} />
                     </TouchableOpacity>
 
@@ -255,6 +226,7 @@ const Profile = ({ navigation }) => {
                         console.log('presser');
                     }}
                         style={styles.TouchableOpacity}
+                        activeOpacity={0.7}
                     >
                         <View style={styles.menuItems}>
                             <Ionicons name="help-circle-outline"
@@ -264,14 +236,15 @@ const Profile = ({ navigation }) => {
                                 Help
                             </Text>
                         </View>
-                        <MaterialIcons
-                            name="keyboard-arrow-right"
-                            size={24}
+                        <AntDesign
+                            name="caretright"
+                            size={hp(2.5)}
                             color={COLORS.black} />
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={handleShare}
                         style={styles.TouchableOpacity}
+                        activeOpacity={0.7}
                     >
                         <View style={styles.menuItems}>
                             <MaterialCommunityIcons name="email-outline"
@@ -281,15 +254,16 @@ const Profile = ({ navigation }) => {
                                 Invite Your Friends
                             </Text>
                         </View>
-                        <MaterialIcons
-                            name="keyboard-arrow-right"
-                            size={24}
+                        <AntDesign
+                            name="caretright"
+                            size={hp(2.5)}
                             color={COLORS.black} />
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         style={styles.logOutContainer}
                         onPress={handleLogout}
+                        activeOpacity={0.7}
                     >
                         <View style={{
                             flexDirection: 'row',
@@ -298,16 +272,16 @@ const Profile = ({ navigation }) => {
                             marginTop: hp(10),
                         }}>
                             <MaterialCommunityIcons name="logout-variant"
-                                size={24}
+                                size={hp(3.5)}
                                 color={COLORS.black} />
-                            <Text style={{ marginLeft: wp(2), color: 'red', fontFamily: fontFamily.FONTS.Medium, fontSize: hp(2.2) }}>
+                            <Text style={{ marginLeft: wp(2), color: 'red', fontFamily: fontFamily.FONTS.Medium, fontSize: hp(2.6) }}>
                                 Logout
                             </Text>
                         </View>
                     </TouchableOpacity>
                 </View>
             </View>
-        </SafeAreaView >
+        </SafeAreaView>
     );
 };
 
@@ -354,7 +328,8 @@ const styles = StyleSheet.create({
         // ...FONTS.h4,
         // marginVertical: hp(1),
         fontFamily: fontFamily.FONTS.Medium,
-        fontSize: hp(2.2),
+        fontSize: hp(2.4),
+        // fontWeight: '600',
         color: COLORS.black,
         marginHorizontal: wp(25),
     },
@@ -362,10 +337,7 @@ const styles = StyleSheet.create({
         // ...FONTS.body3,
         color: COLORS.darkgray1,
         fontFamily: fontFamily.FONTS.regular,
-        fontSize: hp(1.8),
-
-
-
+        fontSize: hp(2.2),
     },
     rightArrow: {
         flexDirection: 'column',
@@ -391,7 +363,7 @@ const styles = StyleSheet.create({
     menuText: {
         // ...FONTS.h4,
         fontFamily: fontFamily.FONTS.regular,
-        fontSize: hp(2.2),
+        fontSize: hp(2.6),
         color: COLORS.black,
         marginLeft: wp(5),
         // justifyContent:'center',

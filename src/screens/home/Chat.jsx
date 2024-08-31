@@ -105,10 +105,10 @@ const Chats = ({ navigation }) => {
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
-            <StatusBar backgroundColor={COLORS.lightGreen} barStyle="light-content" />
+            <StatusBar backgroundColor={'#f2f2f2'} barStyle="dark-content" />
 
             {searchVisible ? (
-                <View style={{ backgroundColor: COLORS.lightGreen, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 7 }}>
+                <View style={{}}>
                     <View style={{ width: '90%', marginVertical: hp(1), marginHorizontal: wp(5), flexDirection: 'row', justifyContent: 'center', backgroundColor: '#e8e8e8', borderRadius: wp(4) }}>
                         <TouchableOpacity onPress={toggelInput} style={{ marginLeft: wp(10) }}>
                             <AntDesign name="arrowleft" size={hp(3)} color={COLORS.black} style={{ position: 'absolute', left: 10, top: 10 }} />
@@ -117,8 +117,8 @@ const Chats = ({ navigation }) => {
                             placeholder="Search..."
                             placeholderTextColor={COLORS.darkgray1}
                             keyboardType="default"
-                            value={searchText}
                             autoFocus={true}
+                            value={searchText}
                             style={{ width: '100%', marginLeft: wp(10), height: hp(6), color: COLORS.darkgray, fontFamily: fontFamily.FONTS.regular, }}
                             onChangeText={(text) => setSearchText(text)}
                         />
@@ -130,10 +130,10 @@ const Chats = ({ navigation }) => {
                     </View>
                 </View>
             ) : (
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: COLORS.lightGreen, height: hp(8), padding: wp(3), shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 4 }}>
-                    <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.tertiaryWhite, fontSize: hp(2.5), fontWeight: '700' }}>CallVerse</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: hp(6), padding: wp(2), marginHorizontal: wp(2.3) }}>
+                    <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.darkgray, fontSize: hp(2.8), fontWeight: '700' }}>CallVerse</Text>
                     <TouchableOpacity onPress={toggelInput}>
-                        <Iconics name="search" size={hp(3)} color={COLORS.white} />
+                        <Iconics name="search" size={hp(3.3)} color={COLORS.darkgray} />
                     </TouchableOpacity>
                 </View>
             )}
@@ -144,10 +144,10 @@ const Chats = ({ navigation }) => {
                     keyExtractor={item => item.id}
                     renderItem={({ item }) => (
                         <TouchableOpacity onPress={() => navigation.navigate('PersonalChats', { User: item.otherUser })} onLongPress={() => handleLongPress(item)}>
-                            <View style={{ flexDirection: 'row', padding: wp(2), alignItems: 'center', }}>
+                            <View style={{ flexDirection: 'row', padding: wp(2), alignItems: 'center', marginHorizontal: wp(2.3) }}>
                                 <Image source={{ uri: item.otherUser.photoUrl }} style={{ width: wp(13), height: wp(13), borderRadius: wp(13) }} />
                                 <View style={{ flexDirection: 'column' }}>
-                                    <Text style={{ marginLeft: wp(2.2), paddingTop: hp(0.5), fontFamily: fontFamily.FONTS.Medium, fontSize: hp(2.2), color: COLORS.darkgray }} numberOfLines={1}>{item.otherUser.name}</Text>
+                                    <Text style={{ marginLeft: wp(2.2), paddingTop: hp(0.5), fontFamily: fontFamily.FONTS.Medium, fontSize: hp(2.2), color: COLORS.darkgray }} numberOfLines={1}>{item.otherUser.name || item.otherUser.displayName}</Text>
                                     <Text style={{ marginLeft: wp(2.2), fontFamily: fontFamily.FONTS.regular, fontSize: hp(1.8), color: COLORS.darkgray1 }} numberOfLines={1}>{item.message}</Text>
                                 </View>
                             </View>
