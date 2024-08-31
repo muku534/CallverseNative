@@ -2,7 +2,7 @@
 /* eslint-disable react-native/no-inline-styles */
 /* eslint-disable prettier/prettier */
 /* eslint-disable prettier/prettier */
-import { View, Text, SafeAreaView, ScrollView, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, SafeAreaView, ScrollView, TextInput, TouchableOpacity, StyleSheet, Alert, ToastAndroid } from 'react-native';
 import React, { useState, useEffect, useRef } from 'react';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -78,6 +78,10 @@ const AddContact = ({ navigation }) => {
 
 
     const saveContact = async () => {
+        if (!contactName || !phoneNumber) {
+            ToastAndroid.show('Please enter name and number', ToastAndroid.SHORT);
+            return;
+        }
         try {
             // Check if the phone number exists in the Users collection
             const existingUserData = await checkUserByPhoneNumber(phoneNumber);
