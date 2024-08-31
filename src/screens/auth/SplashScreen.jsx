@@ -119,10 +119,6 @@ const SplashScreen = ({ navigation }) => {
         }
     };
 
-
-
-
-
     useEffect(() => {
         const checkAuthAndFetchProducts = async () => {
             try {

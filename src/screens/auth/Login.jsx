@@ -1,13 +1,8 @@
 /* eslint-disable prettier/prettier */
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable prettier/prettier */
-/* eslint-disable no-unused-vars */
-/* eslint-disable react-native/no-inline-styles */
-/* eslint-disable prettier/prettier */
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, Alert, ScrollView, StyleSheet, ToastAndroid } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, TextInput, TouchableOpacity, Image, ToastAndroid, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, FONTS, SIZES } from '../../../constants';
+import { COLORS } from '../../../constants';
 import Button from '../../Components/Button';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -18,26 +13,29 @@ import {
 import fontFamily from '../../../constants/fontFamily';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
-import dynamicLinks from '@react-native-firebase/dynamic-links';
-import messaging from '@react-native-firebase/messaging';
 import { EmailSignin } from '../../config/EmailSignup';
+import { CommonActions } from '@react-navigation/native';
+import { fetchChats, fetchContacts, loginUser } from '../../redux/action';
+import { useDispatch } from 'react-redux';
 
 const Login = ({ navigation }) => {
-    const [email, setEmail] = useState('');
-    const [loding, setLoding] = useState(false);
-    const [linkLoading, setLinkLoading] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [password, setPassword] = useState('');
+    const dispatch = useDispatch();
+    const [credentials, setCredentials] = useState({ email: '', password: '' });
+    const [loadingState, setLoadingState] = useState({ loading: false });
 
+    const handleInputChange = useCallback((field, value) => {
+        setCredentials(prev => ({ ...prev, [field]: value }));
+    }, []);
 
-    const handleSignin = async () => {
+    const handleSignin = useCallback(async () => {
+        const { email, password } = credentials;
         if (!email || !password) {
             ToastAndroid.show('Please enter email and password', ToastAndroid.SHORT);
             return;
         }
 
         try {
-            setLoading(true)
+            setLoadingState({ loading: true });
             const user = await EmailSignin({ email, password });
             if (user) {
                 ToastAndroid.show('Signed in successfully!', ToastAndroid.SHORT);
@@ -47,104 +45,147 @@ const Login = ({ navigation }) => {
                         routes: [{ name: 'TabStack' }],
                     })
                 );
-                setEmail('');
-                setPassword('');
+                await fetchUserData(user.uid);
+                setCredentials({ email: '', password: '' });
             } else {
                 ToastAndroid.show('Invalid email or password', ToastAndroid.SHORT);
             }
-            setLoading(false)
         } catch (error) {
             console.error('Signin Error:', error);
-            ToastAndroid.show('Failed to signin . Please try again.', ToastAndroid.SHORT);
+            ToastAndroid.show('Failed to sign in. Please try again.', ToastAndroid.SHORT);
         } finally {
-            setLoading(false)
+            setLoadingState({ loading: false });
         }
-    }
+    }, [credentials]);
 
+    const fetchUserData = useCallback(async (userId) => {
+        try {
+            const userDoc = await firestore().collection('Users').doc(userId).get();
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                console.log('User data fetched from Firestore:', userData.randomNumber);
+                await AsyncStorage.setItem('userData', JSON.stringify(userData));
+                dispatch(loginUser(userData));
+                await getContacts(userId);
+                await getChats(userId);
+            } else {
+                console.error('User data not found in Firestore');
+            }
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+        }
+    }, []);
+
+    const getContacts = useCallback(async (userId) => {
+        try {
+            const contactsRef = firestore().collection('Contacts').doc(userId);
+            const doc = await contactsRef.get();
+            if (doc.exists) {
+                const contacts = doc.data().contacts;
+                dispatch(fetchContacts(contacts));
+                console.log('Contacts fetched:', contacts);
+            } else {
+                console.error('Contacts not found');
+            }
+        } catch (error) {
+            console.error('Error fetching contacts:', error);
+        }
+    }, []);
+
+    const getChats = useCallback(async (userId) => {
+        try {
+            const chatsRef = firestore().collection('chatRooms');
+            const snapshot = await chatsRef.where('users', 'array-contains', userId).get();
+
+            if (!snapshot.empty) {
+                const chats = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    const otherUserId = data.users.find(id => id !== userId);
+                    return { id: doc.id, ...data, otherUserId };
+                });
+
+                dispatch(fetchChats(chats));
+                console.log('Chats fetched:', chats);
+            } else {
+                console.error('No chats found for this user');
+            }
+        } catch (error) {
+            console.error('Error fetching chats:', error);
+        }
+    }, []);
 
     return (
-        <SafeAreaView style={styles.container} >
+        <SafeAreaView style={styles.container}>
             <ScrollView showsVerticalScrollIndicator={false}>
                 <View>
                     <View style={styles.imageContainer}>
-                        <Image source={require('../../../assets/image/9233852_4112338.jpg')}
-                            style={styles.image} />
+                        <Image source={require('../../../assets/image/9233852_4112338.jpg')} style={styles.image} />
                     </View>
                     <View style={styles.contentContainer}>
                         <View style={styles.welcomeContainer}>
                             <Text style={styles.welcomeText}>Hi Welcome Back! 👋</Text>
                             <Text style={styles.welcomeText2}>Hello again, you have been missed!</Text>
                         </View>
-                        <View style={styles.inputContainer}>
-                            <Text style={styles.lable}>Phone / Email</Text>
-                            <View style={styles.TextInput}>
-                                <TextInput
-                                    // maxLength={10}
-                                    placeholder="Enter your Phone or Email "
-                                    placeholderTextColor={COLORS.darkgray1}
-                                    keyboardType="email-address"
-                                    style={{ width: '100%', color: COLORS.darkgray1 }}
-                                    value={email}
-                                    onChangeText={text => setEmail(text)}
-                                />
-                            </View>
-                        </View>
-                        <View style={styles.inputContainer}>
-                            <Text style={styles.lable}>Password</Text>
-                            <View style={styles.TextInput}>
-                                <TextInput
-                                    // maxLength={10}
-                                    placeholder="Enter your Password"
-                                    placeholderTextColor={COLORS.darkgray1}
-                                    keyboardType="visible-password"
-                                    style={{ width: '100%', color: COLORS.darkgray1 }}
-                                    value={password}
-                                    onChangeText={text => setPassword(text)}
-                                />
-                            </View>
-                        </View>
-                        {/** {showOtpInput && (
-                            <View style={styles.inputContainer}>
-                                <Text style={styles.lable}>OTP</Text>
-                                <View style={styles.TextInput}>
-                                    <TextInput
-                                        maxLength={6}
-                                        placeholder="Enter OTP"
-                                        placeholderTextColor={COLORS.darkgray1}
-                                        keyboardType="numeric"
-                                        style={{ width: '100%', color: COLORS.darkgray1 }}
-                                        value={otp}
-                                        onChangeText={text => setOtp(text)}
-                                    />
-                                </View>
-                            </View>
-                        )} */}
+                        <InputField
+                            label="Phone / Email"
+                            placeholder="Enter your Phone or Email"
+                            value={credentials.email}
+                            onChangeText={text => handleInputChange('email', text)}
+                        />
+                        <InputField
+                            label="Password"
+                            placeholder="Enter your Password"
+                            value={credentials.password}
+                            onChangeText={text => handleInputChange('password', text)}
+                        />
                         <Button
                             title="Login"
                             onPress={handleSignin}
+                            loading={loadingState.loading}
                             style={styles.Button}
                         />
-
                     </View>
-                    <View style={styles.lineText}>
-                        <View style={styles.line} />
-                        <Text style={styles.text}>or</Text>
-                        <View style={styles.line} />
-                    </View>
-                    <View style={styles.linkContainer}>
-                        <Text style={styles.linkText}>Don't have an account? </Text>
-                        <TouchableOpacity onPress={() => navigation.navigate('Welcome')} style={styles.linkbutton}>
-                            <Text style={styles.link}>Generate New Number</Text>
-                        </TouchableOpacity>
-                    </View>
+                    <Divider />
+                    <LinkText navigation={navigation} />
                 </View>
             </ScrollView>
         </SafeAreaView>
     );
 };
 
-const styles = StyleSheet.create({
+const InputField = ({ label, placeholder, value, onChangeText }) => (
+    <View style={styles.inputContainer}>
+        <Text style={styles.label}>{label}</Text>
+        <View style={styles.textInput}>
+            <TextInput
+                placeholder={placeholder}
+                placeholderTextColor={COLORS.darkgray1}
+                style={styles.inputText}
+                value={value}
+                onChangeText={onChangeText}
+            />
+        </View>
+    </View>
+);
 
+const Divider = () => (
+    <View style={styles.lineText}>
+        <View style={styles.line} />
+        <Text style={styles.text}>or</Text>
+        <View style={styles.line} />
+    </View>
+);
+
+const LinkText = ({ navigation }) => (
+    <View style={styles.linkContainer}>
+        <Text style={styles.linkText}>Don't have an account? </Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Welcome')} style={styles.linkButton}>
+            <Text style={styles.link}>Generate New Number</Text>
+        </TouchableOpacity>
+    </View>
+);
+
+const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.white,
@@ -154,18 +195,14 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        // marginHorizontal: wp(2),
-        // height: '30%',
     },
     image: {
         width: '100%',
         height: hp(37.5),
-        // marginVertical: hp(2),
     },
     contentContainer: {
         flex: 1,
         marginHorizontal: wp(3),
-        // justifyContent: 'space-between',
     },
     welcomeContainer: {
         marginVertical: hp(1),
@@ -183,24 +220,25 @@ const styles = StyleSheet.create({
         fontFamily: fontFamily.FONTS.regular,
     },
     inputContainer: {
-        // marginBottom: 12,
-    },
-    lable: {
-        color: COLORS.black,
-        fontSize: hp(2),
-        fontWeight: '400',
-        marginTop: hp(1.5),
         marginBottom: hp(1),
     },
-    TextInput: {
+    label: {
+        color: COLORS.black,
+        fontSize: hp(2),
+        marginBottom: hp(1),
+    },
+    textInput: {
         width: '100%',
         height: hp(6),
         borderColor: COLORS.secondaryGray,
         borderWidth: 0.5,
         borderRadius: wp(2),
-        alignItems: 'center',
-        justifyContent: 'center',
         paddingLeft: wp(2),
+        justifyContent: 'center',
+    },
+    inputText: {
+        width: '100%',
+        color: COLORS.darkgray1,
     },
     Button: {
         marginTop: hp(3.5),
@@ -214,9 +252,8 @@ const styles = StyleSheet.create({
     linkText: {
         fontSize: hp(2.2),
         color: COLORS.black,
-
     },
-    linkbutton: {
+    linkButton: {
         justifyContent: 'center',
         alignItems: 'flex-end',
     },
@@ -244,8 +281,6 @@ const styles = StyleSheet.create({
         color: COLORS.black,
         textAlign: 'center',
     },
-
-
 });
 
 export default Login;
