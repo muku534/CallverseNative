@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
@@ -14,11 +14,53 @@ import PersonalChats from './src/screens/home/PersonalChat';
 import TabStack from './src/navigation/BottomNavigation';
 import Contacts from './src/screens/home/contact';
 import Profile from './src/screens/home/Profile';
+import messaging from '@react-native-firebase/messaging';
 
 const Stack = createStackNavigator();
 
 function App() {
+
   const navigationRef = useRef(null);
+
+  useEffect(() => {
+    const requestPermission = async () => {
+      const authStatus = await messaging().requestPermission();
+      const enabled =
+        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+      if (enabled) {
+        console.log('Authorization status:', authStatus);
+      } else {
+        console.log('Notification permission not granted');
+      }
+    };
+
+    requestPermission();
+  }, []);
+
+
+  useEffect(() => {
+    // Foreground notification tap handling
+    const unsubscribe = messaging().onNotificationOpenedApp(remoteMessage => {
+      if (remoteMessage?.data?.chatId) {
+        navigationRef.current?.navigate('PersonalChats', { chatId: remoteMessage.data.chatId });
+      }
+    });
+
+    // App opened from a quit state (not running)
+    messaging()
+      .getInitialNotification()
+      .then(remoteMessage => {
+        if (remoteMessage?.data?.chatId) {
+          navigationRef.current?.navigate('PersonalChats', { chatId: remoteMessage.data.chatId });
+        }
+      });
+
+    return unsubscribe;
+  }, []);
+
+
   return (
     <Provider store={store}>
       <SafeAreaProvider>

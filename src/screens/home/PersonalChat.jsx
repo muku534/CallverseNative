@@ -233,7 +233,8 @@ const PersonalChats = ({ navigation, route }) => {
                     });
 
                     // Send push notification
-                    await sendPushNotification([textMessage]); // Notify about the new message
+                    // Send push notification to the recipient
+                    // await sendPushNotification(User.fcmToken, textMessage);
                 } else {
                     console.error('userData is null');
                     return; // Exit if userData is missing
@@ -246,23 +247,57 @@ const PersonalChats = ({ navigation, route }) => {
         }
     }, [userData, chatRoomRef]);
 
-    // Function to send push notifications for new messages
-    const sendPushNotification = async (messages) => {
+    const sendPushNotification = async (targetFcmToken, message) => {
+        const FCM_SERVER_KEY = 'K8p6MPczQWSxPDS4rXh4KIruac8JYsQfMCWPfBeU1BE'; // Replace with your FCM Server Key
+
+        // Prepare the notification payload
+        const notificationData = {
+            to: targetFcmToken, // The recipient's FCM token
+            notification: {
+                title: `${message.user.name} sent a message`, // Sender's name
+                body: message.text || 'You have a new message', // Message content
+                sound: 'default',
+            },
+            data: {
+                chatId: message.chatId || '', // Ensure chatId exists or provide a default value
+                senderName: message.user.name || '', // Ensure senderName exists or provide a default value
+                messageId: message._id || '', // Ensure messageId exists or provide a default value
+            },
+        };
+
+        // Set up headers for the FCM request
+        const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `key=${FCM_SERVER_KEY}`,
+        };
+
         try {
-            if (messages.length > 0) {
-                const lastMessage = messages[0];
-                if (lastMessage.user._id !== userData.id) {
-                    // If the last message is not sent by the current user, send a push notification
-                    await messaging().sendToDevice(User.fcmToken, {
-                        notification: {
-                            title: 'New Message',
-                            body: `${lastMessage.user.name}: ${lastMessage.text}`,
-                        },
-                    });
-                }
+            // Send the notification using FCM REST API
+            const response = await fetch('https://fcm.googleapis.com/fcm/send', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(notificationData),
+            });
+
+            // Log the raw response text for debugging
+            const responseText = await response.text();
+            console.log('Raw Response Text:', responseText);
+
+            // Attempt to parse the response as JSON
+            try {
+                const responseData = JSON.parse(responseText);
+                console.log('FCM Response:', responseData);
+            } catch (jsonError) {
+                console.error('Error parsing JSON response:', jsonError);
+            }
+
+            // Check if the response was successful
+            if (!response.ok) {
+                console.error('FCM request failed with status:', response.status);
+                // Optional: Handle specific error statuses (e.g., 401, 403, 500)
             }
         } catch (error) {
-            console.error('Error sending push notification:', error);
+            console.error('Error sending FCM notification:', error);
         }
     };
 
