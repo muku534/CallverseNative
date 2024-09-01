@@ -17,6 +17,7 @@ import { EmailSignin } from '../../config/EmailSignup';
 import { CommonActions } from '@react-navigation/native';
 import { fetchChats, fetchContacts, loginUser } from '../../redux/action';
 import { useDispatch } from 'react-redux';
+import messaging from '@react-native-firebase/messaging';
 
 const Login = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -36,6 +37,11 @@ const Login = ({ navigation }) => {
 
         try {
             setLoadingState({ loading: true });
+            // Request notification permissions
+            await messaging().requestPermission();
+            const fcmToken = await messaging().getToken();
+            console.log('FCM Token:', fcmToken);
+
             const user = await EmailSignin({ email, password });
             if (user) {
                 ToastAndroid.show('Signed in successfully!', ToastAndroid.SHORT);
@@ -45,6 +51,10 @@ const Login = ({ navigation }) => {
                         routes: [{ name: 'TabStack' }],
                     })
                 );
+                // Store FCM token in Firestore
+                if (fcmToken) {
+                    await firestore().collection('Users').doc(user.uid).update({ fcmToken });
+                }
                 await fetchUserData(user.uid);
                 setCredentials({ email: '', password: '' });
             } else {
@@ -64,6 +74,18 @@ const Login = ({ navigation }) => {
             if (userDoc.exists) {
                 const userData = userDoc.data();
                 console.log('User data fetched from Firestore:', userData.randomNumber);
+
+                // Retrieve FCM token
+                const fcmToken = await messaging().getToken();
+                if (fcmToken) {
+                    userData.fcmToken = fcmToken; // Add the token to userData
+                    await firestore().collection('Users').doc(userId).update({ fcmToken });
+                    console.log('FCM Token stored in user data:', fcmToken);
+                } else {
+                    console.error('Failed to retrieve FCM token');
+                }
+
+
                 await AsyncStorage.setItem('userData', JSON.stringify(userData));
                 dispatch(loginUser(userData));
                 await getContacts(userId);

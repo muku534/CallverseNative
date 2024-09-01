@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { SafeAreaView, StyleSheet, View, Text, TouchableOpacity, Image, ImageBackground, PanResponder, Animated } from 'react-native';
+import { SafeAreaView, StyleSheet, View, Text, TouchableOpacity, Image, ImageBackground, PanResponder, Animated, StatusBar } from 'react-native';
 import { GiftedChat, InputToolbar, Composer, Send, Actions, MessageContainer, MessageImage, Bubble, MessageAudio } from 'react-native-gifted-chat';
 import { COLORS } from '../../../constants';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -28,9 +28,9 @@ import { useSelector } from 'react-redux';
 const PersonalChats = ({ navigation, route }) => {
 
     const { User } = route.params;
-    console.log("user data from params", User.id)
+    // console.log("user data from params", User.id)
     const userData = useSelector(state => state.userData)
-    console.log("userData from redux", userData.id)
+    // console.log("userData from redux", userData.id)
     const chatRoomRef = useRef(null);
 
     const [isFullScreen, setIsFullScreen] = useState(false);
@@ -109,6 +109,7 @@ const PersonalChats = ({ navigation, route }) => {
                         createdAt: firestore.FieldValue.serverTimestamp(),
                         users: [userData.id, User.id], // Ensure 'users' array is set
                         messages: [],
+                        archived: false
                     });
                     console.log('Chat room created successfully');
                 } else {
@@ -206,7 +207,7 @@ const PersonalChats = ({ navigation, route }) => {
 
         // Cleanup on component unmount
         return () => unsubscribe();
-    }, [chatRoomRef.current]);
+    }, []);
 
 
     // Sending messages
@@ -230,6 +231,9 @@ const PersonalChats = ({ navigation, route }) => {
                     await chatRoomRef.current.update({
                         messages: firestore.FieldValue.arrayUnion(textMessage),
                     });
+
+                    // Send push notification
+                    await sendPushNotification([textMessage]); // Notify about the new message
                 } else {
                     console.error('userData is null');
                     return; // Exit if userData is missing
@@ -247,7 +251,7 @@ const PersonalChats = ({ navigation, route }) => {
         try {
             if (messages.length > 0) {
                 const lastMessage = messages[0];
-                if (lastMessage.user._id !== userData.randomNumber) {
+                if (lastMessage.user._id !== userData.id) {
                     // If the last message is not sent by the current user, send a push notification
                     await messaging().sendToDevice(User.fcmToken, {
                         notification: {
@@ -347,76 +351,18 @@ const PersonalChats = ({ navigation, route }) => {
         />
     );
 
-    const renderMessageImage = (props) => {
-        return (
-            <MessageImage
-                {...props}
-
-            />
-        );
-    };
-
-    const renderMessageVideo = (props) => {
-        const { currentMessage } = props;
-        return (
-            <TouchableOpacity onPress={() => toggleFullScreen(currentMessage.video)}>
-                <View style={{
-                    width: wp(70),
-                    height: hp(20),
-                    borderRadius: wp(4),
-                    borderTopRightRadius: wp(0),
-                    borderBottomRightRadius: wp(6),
-                    borderTopLeftRadius: wp(4),
-                    borderBottomLeftRadius: wp(0),
-                    overflow: 'hidden', // Ensure the play icon is not overflowing
-                }}>
-                    <Image
-                        source={{ uri: currentMessage.videoThumbnail }}
-                        style={{
-                            width: '100%',
-                            height: '100%',
-                            position: 'absolute',
-                        }}
-                    />
-                    <TouchableOpacity
-                        style={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            transform: [{ translateX: -15 }, { translateY: -20 }], // Center the play icon
-                        }}
-                        onPress={() => toggleFullScreen(currentMessage.video)}
-                    >
-                        <FontAwesome name="play-circle" size={hp(6)} color="white" />
-                    </TouchableOpacity>
-                </View>
-            </TouchableOpacity>
-        );
-    }
-
-
     const renderBubble = (props) => {
         const { currentMessage } = props;
-        console.log('Current Message:', currentMessage);
-        // Add debugging logs if needed
-        console.log('Rendering bubble for currentMessage:', currentMessage.image);
-
-
 
         const bubbleStyle = {
             right: {
                 backgroundColor: COLORS.green, // WhatsApp green color for sent messages
-                borderRadius: wp(4),
-                borderTopRightRadius: wp(0),
-                borderBottomRightRadius: wp(6),
-                borderTopLeftRadius: currentMessage.image ? wp(4) : wp(6),
-                borderBottomLeftRadius: wp(0),
+                borderRadius: wp(3.5),
                 marginVertical: hp(1),
             },
             left: {
                 backgroundColor: COLORS.white, // White color for received messages
-                borderRadius: wp(4),
-                borderTopLeftRadius: wp(6),
+                borderRadius: wp(3.5),
                 marginVertical: hp(1),
             },
         };
@@ -497,6 +443,7 @@ const PersonalChats = ({ navigation, route }) => {
         <ImageBackground source={require('../../../assets/image/wallpaper.webp')}
             style={{ flex: 1 }} resizeMode="cover">
             <SafeAreaView style={{ flex: 1 }}>
+                <StatusBar backgroundColor={COLORS.lightGreen} barStyle="light-content" />
                 <View style={{ flex: 1 }}>
                     {isFullScreen ? (
                         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
@@ -541,7 +488,7 @@ const PersonalChats = ({ navigation, route }) => {
                                         }}
                                     />
 
-                                    <Text style={{ marginLeft: wp(2), color: COLORS.secondaryWhite, fontFamily: fontFamily.FONTS.regular, fontSize: hp(2.5) }}>{User.name}</Text>
+                                    <Text style={{ marginLeft: wp(2), color: COLORS.secondaryWhite, fontFamily: fontFamily.FONTS.regular, fontSize: hp(2.5) }}>{User.name || User.displayName}</Text>
                                 </View>
                                 {selectedMessageId ? null : ( // Render icons only if no message is selected
                                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
