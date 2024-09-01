@@ -8,6 +8,7 @@ import {
 import fontFamily from '../../../constants/fontFamily';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Iconics from 'react-native-vector-icons/Ionicons';
 import firestore from '@react-native-firebase/firestore';
 import Entypo from 'react-native-vector-icons/Entypo';
@@ -47,13 +48,15 @@ const Chats = ({ navigation }) => {
                     const chatData = chatDoc.data();
                     const messages = chatData?.messages || [];
                     const lastMessage = messages[messages.length - 1] || {};
+                    const archived = chatData?.archived;
                     return {
                         ...chat,
                         otherUser: {
                             ...contact,
                             createdAt: contact.createdAt ? contact.createdAt.toDate() : null // Adjust if needed
                         },
-                        message: lastMessage.text || 'No message'
+                        message: lastMessage.text || 'No message',
+                        archive: archived
                     }; // Use contact details
                 } else {
                     console.log("Contact not found, fetching from Firestore...");
@@ -63,6 +66,7 @@ const Chats = ({ navigation }) => {
                         const chatData = chatDoc.data();
                         const messages = chatData?.messages || [];
                         const lastMessage = messages[messages.length - 1] || {};
+                        const archived = chatData?.archived;
 
                         if (userDoc.exists) {
                             const userData = userDoc.data();
@@ -73,7 +77,8 @@ const Chats = ({ navigation }) => {
                                     ...userData,
                                     createdAt: userData.createdAt.toDate(), // Adjust based on your timestamp handling
                                 },
-                                message: lastMessage.text || 'No message'
+                                message: lastMessage.text || 'No message',
+                                archive: archived
                             };
                         } else {
                             console.log("User document does not exist in Firestore.");
@@ -119,16 +124,21 @@ const Chats = ({ navigation }) => {
 
     const archiveSelectedChats = async () => {
         try {
-            await Promise.all(selectedChats.map(chat =>
-                firestore().collection('chatRooms').doc(chat.id).update({ archived: true })
-            ));
+            // Optimistically update local state before Firestore operation
+            const updatedChatsState = updatedChats.map(chat => {
+                if (selectedChats.includes(chat)) {
+                    return { ...chat, archived: !chat.archived };
+                }
+                return chat;
+            });
 
-            // Update local state to reflect changes
-            setUpdatedChats(prevChats =>
-                prevChats.map(chat =>
-                    selectedChats.includes(chat) ? { ...chat, archived: true } : chat
-                )
-            );
+            setUpdatedChats(updatedChatsState); // Update state optimistically
+
+            // Perform Firestore update
+            await Promise.all(selectedChats.map(async chat => {
+                const newArchivedState = !chat.archived;
+                await firestore().collection('chatRooms').doc(chat.id).update({ archived: newArchivedState });
+            }));
 
             // Clear selection after archiving
             setSelectedChats([]);
@@ -136,6 +146,7 @@ const Chats = ({ navigation }) => {
             console.error("Error archiving chats:", error);
         }
     };
+
 
 
     const handleLongPress = (chat) => {
@@ -187,9 +198,14 @@ const Chats = ({ navigation }) => {
                                 <MaterialIcons name="archive" size={hp(3.3)} color={COLORS.darkgray} />
                             </TouchableOpacity>
                         ) : (
-                            <TouchableOpacity onPress={toggelInput}>
-                                <Iconics name="search" size={hp(3.3)} color={COLORS.darkgray} />
-                            </TouchableOpacity>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', }}>
+                                <TouchableOpacity onPress={toggelInput} style={{ marginHorizontal: wp(3.5) }}>
+                                    <Iconics name="search" size={hp(3.3)} color={COLORS.darkgray} />
+                                </TouchableOpacity>
+                                <TouchableOpacity>
+                                    <MaterialCommunityIcons name="phone-log-outline" size={hp(3.3)} color={COLORS.darkgray} />
+                                </TouchableOpacity>
+                            </View>
                         )}
                     </View>
                 )}
@@ -199,40 +215,81 @@ const Chats = ({ navigation }) => {
                         data={updatedChats}
                         keyExtractor={item => item.id}
                         renderItem={({ item }) => (
-                            <TouchableOpacity onPress={() => selectedChats.includes(item) ? handleLongPress(item) : navigation.navigate('PersonalChats', { User: item.otherUser })} onLongPress={() => handleLongPress(item)}>
-                                <View style={{ flexDirection: 'row', padding: wp(2), alignItems: 'center', paddingHorizontal: wp(2.3), backgroundColor: selectedChats.includes(item) ? '#bcf5bc' : 'transparent', }}>
-                                    <View style={{ position: 'relative' }}>
-                                        <Image
-                                            source={{ uri: item.otherUser.photoUrl }}
-                                            style={{ width: wp(13), height: wp(13), borderRadius: wp(13) }}
-                                        />
-                                        {selectedChats.includes(item) && (
-                                            <View style={{
-                                                backgroundColor: COLORS.tertiaryWhite,
-                                                height: hp(3.5),
-                                                width: hp(3.5),
-                                                borderRadius: hp(3.5),
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                position: 'absolute',
-                                                bottom: -5,
-                                                right: -5,
-                                                margin: wp(0)
-                                            }}>
-                                                <AntDesign
-                                                    name="checkcircle"
-                                                    size={hp(2.8)}
-                                                    color={COLORS.lightGreen}
-                                                />
-                                            </View>
-                                        )}
+                            item.archive ? ( // Check if the chat is archived
+                                <TouchableOpacity onPress={() => selectedChats.includes(item) ? handleLongPress(item) : navigation.navigate('PersonalChats', { User: item.otherUser })} onLongPress={() => handleLongPress(item)}>
+                                    <View style={{ flexDirection: 'row', padding: wp(2), alignItems: 'center', paddingHorizontal: wp(2.3), backgroundColor: selectedChats.includes(item) ? '#bcf5bc' : 'transparent', }}>
+                                        <View style={{ position: 'relative' }}>
+                                            <Image
+                                                source={{ uri: item.otherUser.photoUrl }}
+                                                style={{ width: wp(13), height: wp(13), borderRadius: wp(13) }}
+                                            />
+                                            {selectedChats.includes(item) && (
+                                                <View style={{
+                                                    backgroundColor: COLORS.tertiaryWhite,
+                                                    height: hp(3.5),
+                                                    width: hp(3.5),
+                                                    borderRadius: hp(3.5),
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    position: 'absolute',
+                                                    bottom: -5,
+                                                    right: -5,
+                                                    margin: wp(0)
+                                                }}>
+                                                    <AntDesign
+                                                        name="checkcircle"
+                                                        size={hp(2.8)}
+                                                        color={COLORS.lightGreen}
+                                                    />
+                                                </View>
+                                            )}
+                                        </View>
+                                        <View style={{ flexDirection: 'column', marginLeft: wp(2.2), }}>
+                                            <Text style={{ fontFamily: fontFamily.FONTS.Medium, fontSize: hp(2.2), color: COLORS.darkgray }} numberOfLines={1}>
+                                                {item.otherUser.name} (Archived)
+                                            </Text>
+                                            <Text style={{ fontFamily: fontFamily.FONTS.regular, fontSize: hp(1.8), color: COLORS.primarygray }} numberOfLines={1}>
+                                                {item.message}
+                                            </Text>
+                                        </View>
                                     </View>
-                                    <View style={{ flexDirection: 'column', marginLeft: wp(2.2), }}>
-                                        <Text style={{ fontFamily: fontFamily.FONTS.Medium, fontSize: hp(2.2), color: COLORS.darkgray }} numberOfLines={1}>{item.otherUser.name}</Text>
-                                        <Text style={{ fontFamily: fontFamily.FONTS.regular, fontSize: hp(1.8), color: COLORS.primarygray }} numberOfLines={1}>{item.message}</Text>
+                                </TouchableOpacity>
+                            ) : (
+                                <TouchableOpacity onPress={() => selectedChats.includes(item) ? handleLongPress(item) : navigation.navigate('PersonalChats', { User: item.otherUser })} onLongPress={() => handleLongPress(item)}>
+                                    <View style={{ flexDirection: 'row', padding: wp(2), alignItems: 'center', paddingHorizontal: wp(2.3), backgroundColor: selectedChats.includes(item) ? '#bcf5bc' : 'transparent', }}>
+                                        <View style={{ position: 'relative' }}>
+                                            <Image
+                                                source={{ uri: item.otherUser.photoUrl }}
+                                                style={{ width: wp(13), height: wp(13), borderRadius: wp(13) }}
+                                            />
+                                            {selectedChats.includes(item) && (
+                                                <View style={{
+                                                    backgroundColor: COLORS.tertiaryWhite,
+                                                    height: hp(3.5),
+                                                    width: hp(3.5),
+                                                    borderRadius: hp(3.5),
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    position: 'absolute',
+                                                    bottom: -5,
+                                                    right: -5,
+                                                    margin: wp(0)
+                                                }}>
+                                                    <AntDesign
+                                                        name="checkcircle"
+                                                        size={hp(2.8)}
+                                                        color={COLORS.lightGreen}
+                                                    />
+                                                </View>
+                                            )}
+                                        </View>
+                                        <View style={{ flexDirection: 'column', marginLeft: wp(2.2), }}>
+                                            <Text style={{ fontFamily: fontFamily.FONTS.Medium, fontSize: hp(2.2), color: COLORS.darkgray }} numberOfLines={1}>{item.otherUser.name}</Text>
+                                            <Text style={{ fontFamily: fontFamily.FONTS.regular, fontSize: hp(1.8), color: COLORS.primarygray }} numberOfLines={1}>{item.message}</Text>
+                                        </View>
                                     </View>
-                                </View>
-                            </TouchableOpacity>
+                                </TouchableOpacity>
+                            )
                         )}
                         ListEmptyComponent={() => (
                             <View style={{ flex: 1, marginVertical: hp(30), justifyContent: 'center', alignItems: 'center' }}>
