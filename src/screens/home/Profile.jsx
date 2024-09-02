@@ -101,8 +101,8 @@ const Profile = ({ navigation }) => {
     return (
         <SafeAreaView style={{ flex: 1, }}>
             <StatusBar backgroundColor={'#f2f2f2'} barStyle="dark-content" />
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: hp(8), padding: wp(3), }}>
-                <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.darkgray, fontSize: hp(2.8), fontWeight: '700' }}>Settings</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: hp(6), padding: wp(2), marginHorizontal: wp(2.3) }}>
+                <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.primarygreen, fontSize: hp(3), fontWeight: 'bold' }}>Settings</Text>
             </View>
 
             <View style={styles.container}>
@@ -143,7 +143,7 @@ const Profile = ({ navigation }) => {
                         <AntDesign
                             name="caretright"
                             size={hp(2.5)}
-                            color={COLORS.black} />
+                            color={COLORS.primarygreen} />
                     </TouchableOpacity>
 
                     <Modal visible={showMenu} transparent animationType="fade">
@@ -181,7 +181,7 @@ const Profile = ({ navigation }) => {
                         <AntDesign
                             name="caretright"
                             size={hp(2.5)}
-                            color={COLORS.black} />
+                            color={COLORS.primarygreen} />
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={() => {
@@ -201,7 +201,7 @@ const Profile = ({ navigation }) => {
                         <AntDesign
                             name="caretright"
                             size={hp(2.5)}
-                            color={COLORS.black} />
+                            color={COLORS.primarygreen} />
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={() => AndroidOpenSettings.appDetailsSettings()}
@@ -219,7 +219,7 @@ const Profile = ({ navigation }) => {
                         <AntDesign
                             name="caretright"
                             size={hp(2.5)}
-                            color={COLORS.black} />
+                            color={COLORS.primarygreen} />
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={() => {
@@ -239,7 +239,7 @@ const Profile = ({ navigation }) => {
                         <AntDesign
                             name="caretright"
                             size={hp(2.5)}
-                            color={COLORS.black} />
+                            color={COLORS.primarygreen} />
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={handleShare}
@@ -257,7 +257,7 @@ const Profile = ({ navigation }) => {
                         <AntDesign
                             name="caretright"
                             size={hp(2.5)}
-                            color={COLORS.black} />
+                            color={COLORS.primarygreen} />
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -351,6 +351,7 @@ const styles = StyleSheet.create({
     TouchableOpacity: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        alignItems: 'center',
         marginVertical: hp(1.3),
         marginHorizontal: wp(4),
         // paddingVertical: 12,

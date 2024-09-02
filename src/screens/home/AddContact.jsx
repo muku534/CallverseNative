@@ -2,7 +2,7 @@
 /* eslint-disable react-native/no-inline-styles */
 /* eslint-disable prettier/prettier */
 /* eslint-disable prettier/prettier */
-import { View, Text, SafeAreaView, ScrollView, TextInput, TouchableOpacity, StyleSheet, Alert, ToastAndroid } from 'react-native';
+import { View, Text, SafeAreaView, ScrollView, TextInput, TouchableOpacity, StyleSheet, Alert, ToastAndroid, StatusBar } from 'react-native';
 import React, { useState, useEffect, useRef } from 'react';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -130,15 +130,17 @@ const AddContact = ({ navigation }) => {
 
     return (
         <SafeAreaView>
+            <StatusBar backgroundColor={COLORS.tertiaryWhite} barStyle="dark-content" />
+            <View style={{ backgroundColor: COLORS.tertiaryWhite, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: hp(6), padding: wp(2), }}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <AntDesign name="arrowleft" size={hp(3)} color={COLORS.black} />
+                    <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.primarygreen, fontSize: hp(3), fontWeight: '700', marginHorizontal: wp(2) }}>Add Contact</Text>
+                </TouchableOpacity>
+            </View>
+
             <ScrollView>
                 <View style={styles.container}>
                     <View style={styles.formContainer}>
-                        {/* <Text style={{
-                    fontSize: 16,
-                    fontWeight: '400',
-                    marginTop: 22,
-                }}>Display name</Text> */}
-
                         <View style={styles.inputContainer}>
                             <FontAwesome name="user" size={hp(3)} color={COLORS.secondaryGray} style={{ marginHorizontal: 10 }} />
                             <TextInput
@@ -167,7 +169,7 @@ const AddContact = ({ navigation }) => {
 
                         <View style={{ marginTop: hp(5) }}>
                             <TouchableOpacity style={{ backgroundColor: COLORS.lightGreen, alignItems: 'center', justifyContent: 'center', borderRadius: wp(7) }} onPress={() => saveContact()}>
-                                <Text style={{ padding: hp(1.5), fontFamily: fontFamily.FONTS.Medium, fontSize: hp(2.2), color: COLORS.tertiaryWhite }}>Save</Text>
+                                <Text style={{ padding: hp(1.5), fontWeight: 'bold', fontSize: hp(2.4), color: COLORS.tertiaryWhite }}>Save</Text>
                             </TouchableOpacity>
                         </View>
                     </View>

@@ -7,6 +7,7 @@ import {
 } from '../Components/Pixel/Index';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 import Entypo from 'react-native-vector-icons/Entypo';
 import { COLORS } from '../../constants';
@@ -47,18 +48,17 @@ const TabStack = ({ navigation }) => {
                         backgroundColor: '#fff',
                         borderTopColor: '#f2f2f2',
                     },
+                    tabBarItemStyle: {
+                        marginHorizontal: wp(3), // Increase this value to add more space
+                    },
                 }}
             >
                 <Tab.Screen name="HomeScreen" component={Chats} options={{
                     headerShown: false,
                     tabBarLabel: 'Home',
                     tabBarIcon: ({ focused }) => (
-                        <View style={{ alignItems: 'center' }}>
-                            {focused ? (
-                                <Entypo name="home" size={hp(4)} color={COLORS.darkgray} />
-                            ) : (
-                                <AntDesign name="home" size={hp(3.5)} color={COLORS.darkgray} />
-                            )}
+                        <View style={{ alignItems: 'center', }}>
+                            <AntDesign name="home" size={hp(focused ? 3.8 : 3.5)} color={focused ? COLORS.primarygreen : COLORS.darkgray} />
                         </View>
                     ),
                 }}
@@ -75,13 +75,13 @@ const TabStack = ({ navigation }) => {
                                 style={[
                                     styles.chatButton,
                                     {
-                                        backgroundColor: isModalVisible ? COLORS.darkgray : COLORS.darkgray,
+                                        backgroundColor: isModalVisible ? COLORS.primarygreen : COLORS.primarygreen,
                                     },
                                 ]}
                                 activeOpacity={0.7}
                             >
-                                {isModalVisible ? null : <FontAwesome6 name="plus" size={hp(2.4)} color={COLORS.secondaryWhite} />}
-                                <Text style={{ color: COLORS.secondaryWhite, fontSize: hp(1.9), paddingHorizontal: wp(1.5) }}>
+                                {isModalVisible ? null : <FontAwesome6 name="plus" size={hp(2.4)} color={COLORS.tertiaryWhite} />}
+                                <Text style={{ color: COLORS.tertiaryWhite, fontSize: hp(1.9), paddingHorizontal: wp(1.5) }}>
                                     {isModalVisible ? 'Close' : 'New Chat'}
                                 </Text>
                             </TouchableOpacity>
@@ -93,11 +93,7 @@ const TabStack = ({ navigation }) => {
                     tabBarLabel: 'Profile',
                     tabBarIcon: ({ focused }) => (
                         <View style={{ alignItems: 'center' }}>
-                            {focused ? (
-                                <MaterialCommunityIcons name="account" size={hp(4.5)} color={COLORS.darkgray} />
-                            ) : (
-                                <MaterialCommunityIcons name="account-outline" size={hp(4)} color={COLORS.darkgray} />
-                            )}
+                            <MaterialCommunityIcons name="account-outline" size={hp(focused ? 4.5 : 4)} color={focused ? COLORS.primarygreen : COLORS.darkgray} />
                         </View>
                     ),
                 }} />
@@ -107,7 +103,7 @@ const TabStack = ({ navigation }) => {
             <Modal
                 visible={isModalVisible}
                 transparent={true}
-                animationType="slide"
+                animationType="fade"
             >
                 <TouchableWithoutFeedback onPress={closeModal}>
                     <View style={styles.modalOverlay}>
@@ -136,10 +132,10 @@ const TabStack = ({ navigation }) => {
                                 <View style={styles.divider} />
                                 <TouchableOpacity onPress={() => handleNavigation('Profile')}>
                                     <View style={styles.modalItem}>
-                                        <AntDesign name="setting" size={hp(3)} color={COLORS.darkgray} />
+                                        <Ionicons name="archive-outline" size={hp(3.3)} color={COLORS.darkgray} />
                                         <View>
-                                            <Text style={styles.modalText}>Settings</Text>
-                                            <Text style={styles.modalSubText}>Settings</Text>
+                                            <Text style={styles.modalText}>Archived</Text>
+                                            <Text style={styles.modalSubText}>View your archived chats and conversations</Text>
                                         </View>
                                     </View>
                                 </TouchableOpacity>

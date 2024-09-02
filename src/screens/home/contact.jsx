@@ -80,7 +80,7 @@ const Contacts = ({ navigation }) => {
                     <View>
                         <TouchableOpacity onPress={() => navigation.goBack()} style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <AntDesign name="arrowleft" size={hp(3)} color={COLORS.black} />
-                            <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.darkgray, fontSize: hp(2.8), fontWeight: '700', marginHorizontal: wp(2) }}>Contacts</Text>
+                            <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.primarygreen, fontSize: hp(3), fontWeight: '700', marginHorizontal: wp(2) }}>Contacts</Text>
                         </TouchableOpacity>
                     </View>
                     <TouchableOpacity onPress={toggelInput} style={{ marginHorizontal: wp(2.3) }}>
