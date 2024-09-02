@@ -110,8 +110,6 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
     implementation 'com.google.firebase:firebase-auth'
     implementation 'com.google.firebase:firebase-firestore'
-    implementation project(':rnfgservice')
-    implementation project(':rnwebrtc')
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

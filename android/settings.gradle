@@ -9,11 +9,3 @@ include ':app'
 
 // Include React Native Gradle plugin
 includeBuild('../node_modules/@react-native/gradle-plugin')
-
-// Include and configure react-native-webrtc
-include ':rnwebrtc'
-project(':rnwebrtc').projectDir = new File(rootProject.projectDir, '../node_modules/@videosdk.live/react-native-webrtc/android')
-
-// Include and configure react-native-foreground-service
-include ':rnfgservice'
-project(':rnfgservice').projectDir = new File(rootProject.projectDir, '../node_modules/@videosdk.live/react-native-foreground-service/android')
