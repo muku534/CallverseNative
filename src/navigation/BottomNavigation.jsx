@@ -130,7 +130,7 @@ const TabStack = ({ navigation }) => {
                                     </View>
                                 </TouchableOpacity>
                                 <View style={styles.divider} />
-                                <TouchableOpacity onPress={() => handleNavigation('Profile')}>
+                                <TouchableOpacity onPress={() => handleNavigation('ArchivedChats')}>
                                     <View style={styles.modalItem}>
                                         <Ionicons name="archive-outline" size={hp(3.3)} color={COLORS.darkgray} />
                                         <View>

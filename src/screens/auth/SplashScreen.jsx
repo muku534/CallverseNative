@@ -102,6 +102,7 @@ const SplashScreen = ({ navigation }) => {
                     // Return an object with chat details including other user information
                     return {
                         id: doc.id,
+                        archived: data.archived,
                         createdAt: data.createdAt,
                         messages: data.messages || [], // Ensure to return an empty array if 'messages' is undefined
                         otherUser: otherUserData // Include other user data

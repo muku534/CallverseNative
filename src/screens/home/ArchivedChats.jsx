@@ -1,4 +1,4 @@
-import { SafeAreaView, StatusBar, StyleSheet, TouchableOpacity, TextInput, Text, View, Image, FlatList, TouchableWithoutFeedback, ToastAndroid } from 'react-native';
+import { SafeAreaView, StatusBar, StyleSheet, TouchableOpacity, TextInput, Text, View, Image, FlatList, TouchableWithoutFeedback } from 'react-native';
 import React, { useEffect, useState, useMemo } from 'react';
 import { COLORS } from '../../../constants';
 import {
@@ -14,100 +14,19 @@ import firestore from '@react-native-firebase/firestore';
 import Entypo from 'react-native-vector-icons/Entypo';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchChats, fetchChatsRoom } from '../../redux/action';
-import SelectDropdown from 'react-native-select-dropdown'; // Import the dropdown
 
-const Chats = ({ navigation }) => {
-
+const ArchivedChats = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const chatRoom = useSelector(state => state.chatRoom);
     const [searchVisible, setSearchVisible] = useState(false);
     const [searchText, setSearchText] = useState('');
-    const [filteredChats, setFilteredChats] = useState([]);
-    const [updatedChats, setUpdatedChats] = useState([]);
-
-    const dispatch = useDispatch();
-    const Chats = useSelector(state => state.chats);
-    const chatRoom = useSelector(state => state.chatRoom);
     const [selectedChats, setSelectedChats] = useState([]);
     const storedContacts = useSelector(state => state.contacts);
+    const [filteredChats, setFilteredChats] = useState([]);
 
-    useEffect(() => {
-        // Log initial data from Redux
-        console.log("Initial Chats from Redux:", Chats);
-        console.log("Contacts from Redux:", storedContacts);
-
-        // Fetch user details for each chat
-        const fetchUserDetails = async () => {
-            console.log("Fetching user details...");
-
-            const updatedChats = await Promise.all(Chats.map(async chat => {
-                console.log(`Processing chat ID: ${chat.id}, Other User ID: ${chat.otherUser.id}`);
-
-                // Use storedContacts directly instead of contacts state
-                const contact = storedContacts.find(contact => contact.id === chat.otherUser.id);
-                if (contact) {
-                    console.log("Contact found in Redux contacts:", contact);
-                    // Fetch the chat document
-                    const chatDoc = await firestore().collection('chatRooms').doc(chat.id).get();
-                    const chatData = chatDoc.data();
-                    const messages = chatData?.messages || [];
-                    const lastMessage = messages[messages.length - 1] || {};
-                    const archived = chatData?.archived;
-                    return {
-                        ...chat,
-                        otherUser: {
-                            ...contact,
-                            createdAt: contact.createdAt ? contact.createdAt.toDate() : null // Adjust if needed
-                        },
-                        message: lastMessage.text || 'No message',
-                        archived: archived
-                    }; // Use contact details
-                } else {
-                    console.log("Contact not found, fetching from Firestore...");
-                    try {
-                        const userDoc = await firestore().collection('Users').doc(chat.otherUser.id).get();
-                        const chatDoc = await firestore().collection('chatRooms').doc(chat.id).get();
-                        const chatData = chatDoc.data();
-                        const messages = chatData?.messages || [];
-                        const lastMessage = messages[messages.length - 1] || {};
-                        const archived = chatData?.archived;
-
-                        if (userDoc.exists) {
-                            const userData = userDoc.data();
-                            console.log("User data fetched from Firestore:", userData);
-                            return {
-                                ...chat,
-                                otherUser: {
-                                    ...userData,
-                                    createdAt: userData.createdAt.toDate(), // Adjust based on your timestamp handling
-                                },
-                                message: lastMessage.text || 'No message',
-                                archived: archived
-                            };
-                        } else {
-                            console.log("User document does not exist in Firestore.");
-                            return chat;
-                        }
-                    } catch (error) {
-                        console.error("Error fetching user details:", error);
-                        return chat;
-                    }
-                }
-            }));
-            console.log("Updated Chats after fetching user details:", updatedChats);
-
-            setUpdatedChats(updatedChats);
-            // Dispatch updated chats to Redux if needed
-            dispatch(fetchChatsRoom(updatedChats));
-        };
-
-        fetchUserDetails();
-    }, []); // Use storedContacts in dependencies
-
-
-    // Inside your useEffect where you filter chats based on search text
     useEffect(() => {
         const filterChats = () => {
             const filtered = chatRoom
-                .filter(chat => !chat.archived) // Exclude archived chats
                 .filter(chat => {
                     const userName = chat.otherUser.name ? chat.otherUser.name.toLowerCase() : '';
                     return userName.includes(searchText.toLowerCase());
@@ -116,10 +35,10 @@ const Chats = ({ navigation }) => {
         };
 
         filterChats();
-    }, [searchText, chatRoom]); //
+    }, [searchText, chatRoom]); // Add chatRoom to the dependency array
 
-    const unArchivedChats = useMemo(() => {
-        return chatRoom.filter(chat => !chat.archived);
+    const ArchivedChats = useMemo(() => {
+        return chatRoom.filter(chat => chat.archived);
     }, [chatRoom]);
 
     const clearSearch = () => {
@@ -128,43 +47,6 @@ const Chats = ({ navigation }) => {
 
     const toggelInput = () => {
         setSearchVisible(!searchVisible);
-    };
-
-    const archiveSelectedChats = async () => {
-        // Create a copy of the current state to revert back if needed
-        const previousChatsState = [...updatedChats];
-
-        try {
-            // Optimistically update local state before Firestore operation
-            const updatedChatsState = updatedChats.map(chat => {
-                if (selectedChats.includes(chat)) {
-                    return { ...chat, archived: !chat.archived };  // Toggle the archived property
-                }
-                return chat;
-            });
-
-            setUpdatedChats(updatedChatsState); // Update state optimistically
-            dispatch(fetchChatsRoom(updatedChatsState))
-            // Show a Toast message to inform the user (Android only)
-            ToastAndroid.show("Chat archived. You can find it in the Archived screen.", ToastAndroid.SHORT);
-
-            // Perform Firestore update
-            await Promise.all(selectedChats.map(async chat => {
-                const newArchivedState = !chat.archived;
-                await firestore().collection('chatRooms').doc(chat.id).update({ archived: newArchivedState });
-            }));
-
-            // Clear selection after archiving/unarchiving
-            setSelectedChats([]);
-
-
-        } catch (error) {
-            console.error("Error archiving/unarchiving chats:", error);
-
-            // Revert to previous state in case of error
-            setUpdatedChats(previousChatsState);
-            ToastAndroid.show("An error occurred while updating the archive status. Please try again.", ToastAndroid.SHORT);
-        }
     };
 
     const handleLongPress = (chat) => {
@@ -178,6 +60,41 @@ const Chats = ({ navigation }) => {
             }
         });
     };
+
+    const archiveSelectedChats = async () => {
+        // Create a copy of the current state to revert back if needed
+        const previousChatsState = [...chatRoom];
+
+        try {
+            // Optimistically update local state before Firestore operation
+            const updatedChatsState = chatRoom.map(chat => {
+                if (selectedChats.includes(chat)) {
+                    return { ...chat, archived: !chat.archived };  // Toggle the archived property
+                }
+                return chat;
+            });
+
+            setFilteredChats(updatedChatsState); // Update state optimistically
+            dispatch(fetchChatsRoom(updatedChatsState))
+
+            // Perform Firestore update
+            await Promise.all(selectedChats.map(async chat => {
+                const newArchivedState = !chat.archived;
+                await firestore().collection('chatRooms').doc(chat.id).update({ archived: newArchivedState });
+            }));
+
+            // Clear selection after archiving/unarchiving
+            setSelectedChats([]);
+        } catch (error) {
+            console.error("Error archiving/unarchiving chats:", error);
+
+            // Revert to previous state in case of error
+            setFilteredChats(previousChatsState);
+            alert("An error occurred while updating the archive status. Please try again.");
+        }
+    };
+
+
 
     return (
         <TouchableWithoutFeedback onPress={() => setSelectedChats([])}>
@@ -207,16 +124,22 @@ const Chats = ({ navigation }) => {
                         </View>
                     </View>
                 ) : (
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: hp(6), padding: wp(2), marginHorizontal: wp(2.3) }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: hp(6), padding: wp(2), marginHorizontal: wp(1) }}>
+                        <TouchableOpacity onPress={() => navigation.goBack()} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <AntDesign name="arrowleft" size={hp(3)} color={COLORS.black} />
+                            {selectedChats.length > 0 ? (
+                                <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.primarygreen, fontSize: hp(3), fontWeight: '700', marginHorizontal: wp(2) }}>
+                                    {selectedChats.length} Selected
+                                </Text>
+                            ) : (
+                                <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.primarygreen, fontSize: hp(3), fontWeight: '700', marginHorizontal: wp(2) }}>
+                                    Archived Chats
+                                </Text>
+                            )}
+                        </TouchableOpacity>
+
                         {selectedChats.length > 0 ? (
-                            <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.primarygreen, fontSize: hp(3), fontWeight: '700', marginHorizontal: wp(2) }}>
-                                {selectedChats.length} Selected {selectedChats.length > 1 ? 's' : ''}
-                            </Text>
-                        ) : (
-                            <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.primarygreen, fontSize: hp(3), fontWeight: 'bold' }}>CallVerse</Text>
-                        )}
-                        {selectedChats.length > 0 ? (
-                            <TouchableOpacity onPress={archiveSelectedChats} style={{ width: wp(8) }}>
+                            <TouchableOpacity style={{ width: wp(8) }} onPress={archiveSelectedChats}>
                                 <MaterialIcons name="archive" size={hp(3.3)} color={COLORS.darkgray} />
                             </TouchableOpacity>
                         ) : (
@@ -224,17 +147,20 @@ const Chats = ({ navigation }) => {
                                 <TouchableOpacity onPress={toggelInput} style={{ marginHorizontal: wp(3.5) }}>
                                     <Iconics name="search" size={hp(3.3)} color={COLORS.darkgray} />
                                 </TouchableOpacity>
-                                <TouchableOpacity>
-                                    <MaterialCommunityIcons name="phone-log-outline" size={hp(3.3)} color={COLORS.darkgray} />
-                                </TouchableOpacity>
                             </View>
                         )}
                     </View>
                 )}
-
+                <View style={styles.divider} />
+                <View style={{ alignItems: 'center', paddingHorizontal: wp(2), paddingVertical: hp(0.5), backgroundColor: COLORS.lightYellow }}>
+                    <Text style={{ fontWeight: 'medium', color: COLORS.darkgray1, fontSize: hp(2), textAlign: 'center' }} >
+                        You can search through your archived chats or restore them to your main chat list.
+                    </Text>
+                </View>
+                <View style={styles.divider} />
                 <View style={{ marginVertical: hp(1) }}>
                     <FlatList
-                        data={unArchivedChats}
+                        data={ArchivedChats}
                         keyExtractor={item => item.id}
                         renderItem={({ item }) => (
                             <TouchableOpacity onPress={() => selectedChats.includes(item) ? handleLongPress(item) : navigation.navigate('PersonalChats', { User: item.otherUser })} onLongPress={() => handleLongPress(item)}>
@@ -274,7 +200,7 @@ const Chats = ({ navigation }) => {
                         )}
                         ListEmptyComponent={() => (
                             <View style={{ flex: 1, marginVertical: hp(30), justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={{ fontSize: hp(2.2), padding: hp(1.5), color: COLORS.secondaryGray }}>you dont have any contacts add contact click on the + button </Text>
+                                <Text style={{ fontSize: hp(2.2), padding: hp(1.5), color: COLORS.secondaryGray }}>You currently have no archived chats. Chats you archive will appear here.</Text>
                             </View>
                         )}
                     />
@@ -282,13 +208,19 @@ const Chats = ({ navigation }) => {
 
             </SafeAreaView>
         </TouchableWithoutFeedback>
-    );
-};
+    )
+}
 
-export default Chats;
+export default ArchivedChats;
 
 const styles = StyleSheet.create({
     selectedContact: {
         backgroundColor: '#bcf5bc', // Change the background color for the selected contact
+    },
+    divider: {
+        width: '100%',
+        height: 0.4,
+        backgroundColor: COLORS.gray, // Adjust color as needed
+        marginVertical: hp(0.5), // Spacing around the divider
     },
 });

@@ -15,6 +15,7 @@ import TabStack from './src/navigation/BottomNavigation';
 import Contacts from './src/screens/home/contact';
 import Profile from './src/screens/home/Profile';
 import messaging from '@react-native-firebase/messaging';
+import ArchivedChats from './src/screens/home/ArchivedChats';
 
 const Stack = createStackNavigator();
 
@@ -71,9 +72,10 @@ function App() {
             <Stack.Screen name="TabStack" component={TabStack} options={{ headerShown: false }} />
             <Stack.Screen name="Profile" component={Profile} options={{ headerShown: false }} />
             <Stack.Screen name="Contacts" component={Contacts} options={{ headerShown: false }} />
+            <Stack.Screen name="ArchivedChats" component={ArchivedChats} options={{ headerShown: false }} />
             <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
             <Stack.Screen name="AddProfile" component={AddProfile} options={{ headerShown: false }} />
-            <Stack.Screen name="AddContact" component={AddContact} options={{ headerShown: true }} />
+            <Stack.Screen name="AddContact" component={AddContact} options={{ headerShown: false }} />
             <Stack.Screen name="PersonalChats" component={PersonalChats} options={{ headerShown: false }} />
             <Stack.Screen name="VoiceCall" component={VoiceCall} options={{ headerShown: false }} />
           </Stack.Navigator>

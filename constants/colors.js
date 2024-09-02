@@ -8,6 +8,7 @@ const COLORS = {
   secondaryWhite: '#F7F7FC',
   tertiaryWhite: '#fafafa',
   green: '#d2f8d2',
+  primarygreen: '#017561',
   darkGreeen: '#075E54',
   // black: '#000000',
   secondaryBlack: '#0F1828',
@@ -27,7 +28,6 @@ const COLORS = {
   black: '#222222',
   primary: '#007260',
   secondary: '#33a37e',
-
 };
 
 export default COLORS;
