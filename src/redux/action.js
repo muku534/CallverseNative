@@ -9,6 +9,8 @@ export const FETCH_CONTACTS = 'FETCH_CONTACTS';
 export const ADD_CONTACTS = 'ADD_CONTACTS';
 export const DELETE_CONTACTS = 'DELETE_CONTACTS';
 export const FETCH_CHATS = 'FETCH_CHATS';
+export const FETCH_CHATSROOM = 'FETCH_CHATSROOM';
+export const UPDATE_CHAT_ROOM = 'UPDATE_CHAT_ROOM';
 export const ADD_CHATS = 'ADD_CHATS';
 export const REMOVE_CHAT = 'REMOVE_CHAT';
 
@@ -63,12 +65,22 @@ export const fetchChats = (chats) => ({
     payload: { chats }
 });
 
-export const addChats = (chats) => ({
-    type: ADD_CHATS,
-    payload: { chats }
+export const fetchChatsRoom = (chatRoom) => ({
+    type: FETCH_CHATSROOM,
+    payload: { chatRoom }
 });
 
-export const deleteChat = (chats) => ({
+export const updateChatRoom = (updatedChats) => ({
+    type: UPDATE_CHAT_ROOM,
+    payload: updatedChats,
+});
+
+export const addChats = (chatRoom) => ({
+    type: ADD_CHATS,
+    payload: { chatRoom }
+});
+
+export const deleteChat = (chatRoom) => ({
     type: REMOVE_CHAT,
-    payload: { chats }
+    payload: { chatRoom }
 });
