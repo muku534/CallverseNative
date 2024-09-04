@@ -44,6 +44,7 @@ const Login = ({ navigation }) => {
 
             const user = await EmailSignin({ email, password });
             if (user) {
+                await getChats(user.uid);
                 ToastAndroid.show('Signed in successfully!', ToastAndroid.SHORT);
                 navigation.dispatch(
                     CommonActions.reset({
@@ -85,11 +86,9 @@ const Login = ({ navigation }) => {
                     console.error('Failed to retrieve FCM token');
                 }
 
-
                 await AsyncStorage.setItem('userData', JSON.stringify(userData));
                 dispatch(loginUser(userData));
                 await getContacts(userId);
-                await getChats(userId);
             } else {
                 console.error('User data not found in Firestore');
             }
@@ -114,18 +113,44 @@ const Login = ({ navigation }) => {
         }
     }, []);
 
-    const getChats = useCallback(async (userId) => {
+    const getChats = async (userId) => {
         try {
+            if (!userId) {
+                console.error('No userId found');
+                return;
+            }
+
+            // Query for chat rooms where the user's ID is in the 'users' array
             const chatsRef = firestore().collection('chatRooms');
             const snapshot = await chatsRef.where('users', 'array-contains', userId).get();
 
             if (!snapshot.empty) {
-                const chats = snapshot.docs.map(doc => {
+                // Extract chats from each document
+                const chats = await Promise.all(snapshot.docs.map(async (doc) => {
                     const data = doc.data();
-                    const otherUserId = data.users.find(id => id !== userId);
-                    return { id: doc.id, ...data, otherUserId };
-                });
+                    console.log('Document data:', data); // Debugging line
 
+                    // Determine the other user's ID
+                    const otherUserId = data.users.find(id => id !== userId);
+                    let otherUserData = {};
+
+                    if (otherUserId) {
+                        // Fetch other user data from Users collection
+                        const userDoc = await firestore().collection('Users').doc(otherUserId).get();
+                        otherUserData = userDoc.data() || {};
+                    }
+
+                    // Return an object with chat details including other user information
+                    return {
+                        id: doc.id,
+                        archived: data.archived,
+                        createdAt: data.createdAt,
+                        messages: data.messages || [], // Ensure to return an empty array if 'messages' is undefined
+                        otherUser: otherUserData // Include other user data
+                    };
+                }));
+
+                // Dispatch the fetched chats
                 dispatch(fetchChats(chats));
                 console.log('Chats fetched:', chats);
             } else {
@@ -134,7 +159,8 @@ const Login = ({ navigation }) => {
         } catch (error) {
             console.error('Error fetching chats:', error);
         }
-    }, []);
+    };
+
 
     return (
         <SafeAreaView style={styles.container}>

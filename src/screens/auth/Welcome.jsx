@@ -46,17 +46,6 @@ const Welcome = ({ navigation }) => {
                 setRandomNumber(newNumber);
                 setGeneratedNumber(true);
 
-                // // Store the generated number and other user details in Firestore
-                // const user = {
-                //     randomNumber: newNumber,
-                //     // userName: 'John Doe', // Replace with actual user name
-                //     // email: 'prajapatimukesh0111@gmail.com', // Replace with actual email
-                //     // gender: 'Male', // Replace with actual gender
-                //     // bio: 'This is a bio', // Replace with actual bio
-                //     // ...other fields
-                // };
-                // await firestore().collection('Users').doc(newNumber.toString()).set(user);
-
                 Alert.alert('Generated Number', `Your generated number is ${newNumber}`, [
                     {
                         text: 'OK',
@@ -82,25 +71,6 @@ const Welcome = ({ navigation }) => {
             console.log('Error deleting number:', error);
         }
     };
-
-
-    // const getDocument = async () => {
-    //     try {
-    //         const documentSnapshot = await firestore()
-    //             .collection('Users')
-    //             .doc('3316634761')
-    //             .get();
-
-    //         console.log('User ID: ', documentSnapshot.id);
-    //         console.log('User data: ', documentSnapshot.data());
-    //     } catch (error) {
-    //         console.log('Error retrieving document:', error);
-    //     }
-    // };
-
-    // useEffect(() => {
-    //     getDocument();
-    // }, []);
 
     const handleDeleteNumber = () => {
         Alert.alert('Delete Number', 'Are you sure you want to delete the number?', [

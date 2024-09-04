@@ -22,7 +22,6 @@ import firestore from '@react-native-firebase/firestore';
 import ImagePicker from 'react-native-image-crop-picker';
 import storage from '@react-native-firebase/storage';
 import auth from '@react-native-firebase/auth';
-import dynamicLinks from '@react-native-firebase/dynamic-links';
 import messaging from '@react-native-firebase/messaging';
 // import { ToastContainer, useToast } from 'rn-toastify';
 import { EmailSignup } from '../../config/EmailSignup';
@@ -39,6 +38,7 @@ const AddProfile = ({ route, navigation }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [phoneNumber, setPhoneNumber] = useState(randomNumber);
+    const [loading, setLoading] = useState(false)
 
 
     useEffect(() => {
@@ -89,6 +89,7 @@ const AddProfile = ({ route, navigation }) => {
         }
 
         try {
+            setLoading(true)
             const user = await EmailSignup({ email, password, name, randomNumber })
             if (user) {
                 ToastAndroid.show('User created successfully', ToastAndroid.SHORT);
@@ -104,7 +105,8 @@ const AddProfile = ({ route, navigation }) => {
         } catch (error) {
             console.error('Error signing up', error);
             ToastAndroid.show('Failed to create user', ToastAndroid.SHORT);
-
+        } finally {
+            setLoading(false)
         }
 
     }
@@ -222,17 +224,6 @@ const AddProfile = ({ route, navigation }) => {
                             />
                         </View>
 
-                        {/** <Text style={styles.lable}>Bio</Text>
-                        <View style={styles.inputContainer}>
-                            <TextInput
-                                placeholder="Hi there! My name is XYZ"
-                                placeholderTextColor={COLORS.secondaryGray}
-                                keyboardType="default"
-                                style={styles.textInput}
-                                onChangeText={(text) => setBio(text)}
-                            />
-                        </View> */}
-
                         <Text style={styles.lable}>Email </Text>
                         <View style={styles.inputContainer}>
                             <TextInput
@@ -262,6 +253,7 @@ const AddProfile = ({ route, navigation }) => {
                             style={{
                                 marginVertical: hp(4),
                             }}
+                            loading={loading}
                         />
                     </View>
                 </View>
