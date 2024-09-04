@@ -16,8 +16,9 @@ import Contacts from './src/screens/home/contact';
 import Profile from './src/screens/home/Profile';
 import messaging from '@react-native-firebase/messaging';
 import ArchivedChats from './src/screens/home/ArchivedChats';
+import { createSharedElementStackNavigator } from 'react-navigation-shared-element';
 
-const Stack = createStackNavigator();
+const Stack = createSharedElementStackNavigator();
 
 function App() {
 

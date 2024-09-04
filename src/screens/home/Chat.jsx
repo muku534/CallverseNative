@@ -15,6 +15,8 @@ import Entypo from 'react-native-vector-icons/Entypo';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchChats, fetchChatsRoom } from '../../redux/action';
 import SelectDropdown from 'react-native-select-dropdown'; // Import the dropdown
+import UserModal from '../../Components/UserModel/UserModel';
+import { SharedElement } from 'react-navigation-shared-element';
 
 const Chats = ({ navigation }) => {
 
@@ -28,6 +30,8 @@ const Chats = ({ navigation }) => {
     const chatRoom = useSelector(state => state.chatRoom);
     const [selectedChats, setSelectedChats] = useState([]);
     const storedContacts = useSelector(state => state.contacts);
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
 
     useEffect(() => {
         // Log initial data from Redux
@@ -130,13 +134,25 @@ const Chats = ({ navigation }) => {
         setSearchVisible(!searchVisible);
     };
 
+    const handleLongPress = (chat) => {
+        setSelectedChats(prevSelectedChats => {
+            if (prevSelectedChats.includes(chat)) {
+                // If chat is already selected, deselect it
+                return prevSelectedChats.filter(c => c !== chat);
+            } else {
+                // Otherwise, select the chat
+                return [...prevSelectedChats, chat];
+            }
+        });
+    };
+
     const archiveSelectedChats = async () => {
         // Create a copy of the current state to revert back if needed
-        const previousChatsState = [...updatedChats];
+        const previousChatsState = [...chatRoom];
 
         try {
             // Optimistically update local state before Firestore operation
-            const updatedChatsState = updatedChats.map(chat => {
+            const updatedChatsState = chatRoom.map(chat => {
                 if (selectedChats.includes(chat)) {
                     return { ...chat, archived: !chat.archived };  // Toggle the archived property
                 }
@@ -167,121 +183,132 @@ const Chats = ({ navigation }) => {
         }
     };
 
-    const handleLongPress = (chat) => {
-        setSelectedChats(prevSelectedChats => {
-            if (prevSelectedChats.includes(chat)) {
-                // If chat is already selected, deselect it
-                return prevSelectedChats.filter(c => c !== chat);
-            } else {
-                // Otherwise, select the chat
-                return [...prevSelectedChats, chat];
-            }
-        });
+
+
+    // Function to handle opening the modal
+    const openUserModal = (user) => {
+        setSelectedUser(user);
+        setIsModalVisible(true);
+    };
+
+    // Function to close the modal
+    const closeUserModal = () => {
+        setIsModalVisible(false);
+        setSelectedUser(null);
     };
 
     return (
-        <TouchableWithoutFeedback onPress={() => setSelectedChats([])}>
-            <SafeAreaView style={{ flex: 1 }}>
-                <StatusBar backgroundColor={'#f2f2f2'} barStyle="dark-content" />
+        <SafeAreaView style={{ flex: 1 }}>
+            <StatusBar backgroundColor={'#f2f2f2'} barStyle="dark-content" />
 
-                {searchVisible ? (
-                    <View style={{}}>
-                        <View style={{ width: '90%', marginVertical: hp(1), marginHorizontal: wp(5), flexDirection: 'row', justifyContent: 'center', backgroundColor: '#e8e8e8', borderRadius: wp(4) }}>
-                            <TouchableOpacity onPress={toggelInput} style={{ marginLeft: wp(10) }}>
-                                <AntDesign name="arrowleft" size={hp(3)} color={COLORS.black} style={{ position: 'absolute', left: 10, top: 10 }} />
+            {searchVisible ? (
+                <View style={{}}>
+                    <View style={{ width: '90%', marginVertical: hp(1), marginHorizontal: wp(5), flexDirection: 'row', justifyContent: 'center', backgroundColor: '#e8e8e8', borderRadius: wp(4) }}>
+                        <TouchableOpacity onPress={toggelInput} style={{ marginLeft: wp(10) }}>
+                            <AntDesign name="arrowleft" size={hp(3)} color={COLORS.black} style={{ position: 'absolute', left: 10, top: 10 }} />
+                        </TouchableOpacity>
+                        <TextInput
+                            placeholder="Search..."
+                            placeholderTextColor={COLORS.darkgray1}
+                            keyboardType="default"
+                            autoFocus={true}
+                            value={searchText}
+                            style={{ width: '100%', marginLeft: wp(10), height: hp(6), color: COLORS.darkgray, fontFamily: fontFamily.FONTS.regular, }}
+                            onChangeText={(text) => setSearchText(text)}
+                        />
+                        {searchText.length > 0 && ( // Conditionally render the cross icon
+                            <TouchableOpacity onPress={clearSearch} style={{ position: 'absolute', right: 10, top: 10 }}>
+                                <Entypo name="cross" size={hp(3)} color={COLORS.black} />
                             </TouchableOpacity>
-                            <TextInput
-                                placeholder="Search..."
-                                placeholderTextColor={COLORS.darkgray1}
-                                keyboardType="default"
-                                autoFocus={true}
-                                value={searchText}
-                                style={{ width: '100%', marginLeft: wp(10), height: hp(6), color: COLORS.darkgray, fontFamily: fontFamily.FONTS.regular, }}
-                                onChangeText={(text) => setSearchText(text)}
-                            />
-                            {searchText.length > 0 && ( // Conditionally render the cross icon
-                                <TouchableOpacity onPress={clearSearch} style={{ position: 'absolute', right: 10, top: 10 }}>
-                                    <Entypo name="cross" size={hp(3)} color={COLORS.black} />
-                                </TouchableOpacity>
-                            )}
-                        </View>
-                    </View>
-                ) : (
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: hp(6), padding: wp(2), marginHorizontal: wp(2.3) }}>
-                        {selectedChats.length > 0 ? (
-                            <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.primarygreen, fontSize: hp(3), fontWeight: '700', marginHorizontal: wp(2) }}>
-                                {selectedChats.length} Selected {selectedChats.length > 1 ? 's' : ''}
-                            </Text>
-                        ) : (
-                            <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.primarygreen, fontSize: hp(3), fontWeight: 'bold' }}>CallVerse</Text>
-                        )}
-                        {selectedChats.length > 0 ? (
-                            <TouchableOpacity onPress={archiveSelectedChats} style={{ width: wp(8) }}>
-                                <MaterialIcons name="archive" size={hp(3.3)} color={COLORS.darkgray} />
-                            </TouchableOpacity>
-                        ) : (
-                            <View style={{ flexDirection: 'row', alignItems: 'center', }}>
-                                <TouchableOpacity onPress={toggelInput} style={{ marginHorizontal: wp(3.5) }}>
-                                    <Iconics name="search" size={hp(3.3)} color={COLORS.darkgray} />
-                                </TouchableOpacity>
-                                <TouchableOpacity>
-                                    <MaterialCommunityIcons name="phone-log-outline" size={hp(3.3)} color={COLORS.darkgray} />
-                                </TouchableOpacity>
-                            </View>
                         )}
                     </View>
-                )}
-
-                <View style={{ marginVertical: hp(1) }}>
-                    <FlatList
-                        data={unArchivedChats}
-                        keyExtractor={item => item.id}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity onPress={() => selectedChats.includes(item) ? handleLongPress(item) : navigation.navigate('PersonalChats', { User: item.otherUser })} onLongPress={() => handleLongPress(item)}>
-                                <View style={{ flexDirection: 'row', padding: wp(2), alignItems: 'center', paddingHorizontal: wp(4), backgroundColor: selectedChats.includes(item) ? '#bcf5bc' : 'transparent', }}>
-                                    <View style={{ position: 'relative' }}>
-                                        <Image
-                                            source={{ uri: item.otherUser.photoUrl }}
-                                            style={{ width: wp(13), height: wp(13), borderRadius: wp(13) }}
-                                        />
-                                        {selectedChats.includes(item) && (
-                                            <View style={{
-                                                backgroundColor: COLORS.tertiaryWhite,
-                                                height: hp(3.5),
-                                                width: hp(3.5),
-                                                borderRadius: hp(3.5),
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                position: 'absolute',
-                                                bottom: -5,
-                                                right: -5,
-                                                margin: wp(0)
-                                            }}>
-                                                <AntDesign
-                                                    name="checkcircle"
-                                                    size={hp(2.8)}
-                                                    color={COLORS.lightGreen}
-                                                />
-                                            </View>
-                                        )}
-                                    </View>
-                                    <View style={{ flexDirection: 'column', marginLeft: wp(2.2), }}>
-                                        <Text style={{ fontFamily: fontFamily.FONTS.Medium, fontSize: hp(2.2), color: COLORS.darkgray }} numberOfLines={1}>{item.otherUser.name}</Text>
-                                        <Text style={{ fontFamily: fontFamily.FONTS.regular, fontSize: hp(1.8), color: COLORS.primarygray }} numberOfLines={1}>{item.message}</Text>
-                                    </View>
-                                </View>
-                            </TouchableOpacity>
-                        )}
-                        ListEmptyComponent={() => (
-                            <View style={{ flex: 1, marginVertical: hp(30), justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={{ fontSize: hp(2.2), padding: hp(1.5), color: COLORS.secondaryGray }}>you dont have any contacts add contact click on the + button </Text>
-                            </View>
-                        )}
-                    />
                 </View>
+            ) : (
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: hp(6), padding: wp(2), marginHorizontal: wp(2.3) }}>
+                    {selectedChats.length > 0 ? (
+                        <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.primarygreen, fontSize: hp(3), fontWeight: '700', marginHorizontal: wp(2) }}>
+                            {selectedChats.length} Selected {selectedChats.length > 1}
+                        </Text>
+                    ) : (
+                        <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.primarygreen, fontSize: hp(3), fontWeight: 'bold' }}>CallVerse</Text>
+                    )}
+                    {selectedChats.length > 0 ? (
+                        <TouchableOpacity onPress={archiveSelectedChats} style={{ width: wp(8) }}>
+                            <MaterialIcons name="archive" size={hp(3.3)} color={COLORS.darkgray} />
+                        </TouchableOpacity>
+                    ) : (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', }}>
+                            <TouchableOpacity onPress={toggelInput} style={{ marginHorizontal: wp(3.5) }}>
+                                <Iconics name="search" size={hp(3.3)} color={COLORS.darkgray} />
+                            </TouchableOpacity>
+                            <TouchableOpacity>
+                                <MaterialCommunityIcons name="phone-log-outline" size={hp(3.3)} color={COLORS.darkgray} />
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </View>
+            )}
 
-            </SafeAreaView>
-        </TouchableWithoutFeedback>
+            <View style={{ marginVertical: hp(1) }}>
+                <FlatList
+                    data={unArchivedChats}
+                    keyExtractor={item => item.id}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity onPress={() => selectedChats.includes(item) ? handleLongPress(item) : navigation.navigate('PersonalChats', { User: item.otherUser })} onLongPress={() => handleLongPress(item)}>
+                            <View style={{ flexDirection: 'row', padding: wp(2), alignItems: 'center', paddingHorizontal: wp(4), backgroundColor: selectedChats.includes(item) ? '#bcf5bc' : 'transparent', }}>
+                                <View style={{ position: 'relative' }}>
+                                    <TouchableOpacity onPress={() => openUserModal(item.otherUser)}>
+                                        <SharedElement id={`item.${item.otherUser.id}.photo`}>
+                                            <Image
+                                                source={{ uri: item.otherUser.photoUrl }}
+                                                style={{ width: wp(13), height: wp(13), borderRadius: wp(13) }}
+                                            />
+                                        </SharedElement>
+                                    </TouchableOpacity>
+                                    {selectedChats.includes(item) && (
+                                        <View style={{
+                                            backgroundColor: COLORS.tertiaryWhite,
+                                            height: hp(3.5),
+                                            width: hp(3.5),
+                                            borderRadius: hp(3.5),
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            position: 'absolute',
+                                            bottom: -5,
+                                            right: -5,
+                                            margin: wp(0)
+                                        }}>
+                                            <AntDesign
+                                                name="checkcircle"
+                                                size={hp(2.8)}
+                                                color={COLORS.lightGreen}
+                                            />
+                                        </View>
+                                    )}
+                                </View>
+                                <View style={{ flexDirection: 'column', marginLeft: wp(2.2), }}>
+                                    <Text style={{ fontFamily: fontFamily.FONTS.Medium, fontSize: hp(2.2), color: COLORS.darkgray }} numberOfLines={1}>{item.otherUser.name || item.otherUser.displayName}</Text>
+                                    <Text style={{ fontFamily: fontFamily.FONTS.regular, fontSize: hp(1.8), color: COLORS.primarygray }} numberOfLines={1}>{item.message}</Text>
+                                </View>
+                            </View>
+                        </TouchableOpacity>
+                    )}
+                    ListEmptyComponent={() => (
+                        <View style={{ flex: 1, marginVertical: hp(30), justifyContent: 'center', alignItems: 'center' }}>
+                            <Text style={{ fontSize: hp(2.2), padding: hp(1.5), color: COLORS.secondaryGray }}>you dont have any contacts add contact click on the + button </Text>
+                        </View>
+                    )}
+                />
+            </View>
+
+            {/* User Modal */}
+            <UserModal
+                visible={isModalVisible}
+                onClose={closeUserModal}
+                userData={selectedUser}
+            />
+
+        </SafeAreaView>
     );
 };
 

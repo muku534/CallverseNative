@@ -17,6 +17,8 @@ import Iconics from 'react-native-vector-icons/Ionicons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Entypo from 'react-native-vector-icons/Entypo';
 import { useSelector } from 'react-redux';
+import { SharedElement } from 'react-navigation-shared-element';
+import UserModal from '../../Components/UserModel/UserModel';
 
 
 const Contacts = ({ navigation }) => {
@@ -25,6 +27,8 @@ const Contacts = ({ navigation }) => {
     const contacts = useSelector(state => state.contacts)
     const [filteredChats, setFilteredChats] = useState(contacts);
     const [selectedContact, setSelectedContact] = useState(null);
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
 
     const toggelInput = () => {
         setSearchVisible(!searchVisible);
@@ -47,6 +51,18 @@ const Contacts = ({ navigation }) => {
 
     const handleLongPress = (contact) => {
         setSelectedContact(contact);
+    };
+
+    // Function to handle opening the modal
+    const openUserModal = (user) => {
+        setSelectedUser(user);
+        setIsModalVisible(true);
+    };
+
+    // Function to close the modal
+    const closeUserModal = () => {
+        setIsModalVisible(false);
+        setSelectedUser(null);
     };
 
     return (
@@ -88,7 +104,7 @@ const Contacts = ({ navigation }) => {
                     </TouchableOpacity>
                 </View>
             )}
-
+            <View style={styles.divider} />
 
             <View style={{ marginVertical: hp(1) }}>
                 <FlatList
@@ -96,7 +112,11 @@ const Contacts = ({ navigation }) => {
                     renderItem={({ item }) => (
                         <TouchableOpacity onPress={() => navigation.navigate('PersonalChats', { User: item })} onLongPress={() => handleLongPress(item)}>
                             <View style={[item === selectedContact && styles.selectedContact, { flexDirection: 'row', padding: wp(2), alignItems: 'center', marginHorizontal: wp(2.3) }]}>
-                                <Image source={{ uri: item.photoUrl }} style={{ width: wp(13), height: wp(13), borderRadius: wp(13) }} />
+                                <TouchableOpacity onPress={() => openUserModal(item)}>
+                                    <SharedElement id={`item.${item.id}.photo`}>
+                                        <Image source={{ uri: item.photoUrl }} style={{ width: wp(13), height: wp(13), borderRadius: wp(13) }} />
+                                    </SharedElement>
+                                </TouchableOpacity>
                                 <View style={{ flexDirection: 'column' }}>
                                     <Text style={{ marginLeft: wp(2.2), paddingTop: hp(0.5), fontFamily: fontFamily.FONTS.Medium, fontSize: hp(2.2), color: COLORS.darkgray }} numberOfLines={1}>{item.name}</Text>
                                     <Text style={{ marginLeft: wp(2.2), fontFamily: fontFamily.FONTS.regular, fontSize: hp(1.8), color: COLORS.darkgray1 }} numberOfLines={1}>{item.message}</Text>
@@ -111,26 +131,15 @@ const Contacts = ({ navigation }) => {
                         </View>
                     )}
                 />
+
             </View>
 
-
-            {/** <TouchableOpacity
-                style={{
-                    position: 'absolute',
-                    width: wp(14),
-                    height: wp(14),
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    right: wp(4),
-                    bottom: hp(8),
-                    backgroundColor: COLORS.lightGreen,
-                    borderRadius: wp(3),
-                    elevation: 2,
-                }}
-                onPress={() => navigation.navigate('AddContact')}
-            >
-                <Iconics name="person-add" size={hp(3)} color={COLORS.white} />
-            </TouchableOpacity> */}
+            {/* User Modal */}
+            <UserModal
+                visible={isModalVisible}
+                onClose={closeUserModal}
+                userData={selectedUser}
+            />
         </SafeAreaView>
     );
 };
@@ -140,5 +149,11 @@ export default Contacts;
 const styles = StyleSheet.create({
     selectedContact: {
         backgroundColor: COLORS.gray, // Change the background color for the selected contact
+    },
+    divider: {
+        width: '100%',
+        height: 0.4,
+        backgroundColor: COLORS.gray, // Adjust color as needed
+        // marginVertical: hp(0.5), // Spacing around the divider
     },
 });

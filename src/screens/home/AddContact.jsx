@@ -137,6 +137,7 @@ const AddContact = ({ navigation }) => {
                     <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.primarygreen, fontSize: hp(3), fontWeight: '700', marginHorizontal: wp(2) }}>Add Contact</Text>
                 </TouchableOpacity>
             </View>
+            <View style={styles.divider} />
 
             <ScrollView>
                 <View style={styles.container}>
@@ -208,7 +209,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-
+    divider: {
+        width: '100%',
+        height: 0.4,
+        backgroundColor: COLORS.gray, // Adjust color as needed
+        // marginVertical: hp(0.5), // Spacing around the divider
+    },
 });
 
 export default AddContact;
