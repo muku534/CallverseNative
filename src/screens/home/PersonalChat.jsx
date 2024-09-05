@@ -24,13 +24,15 @@ import { createThumbnail } from 'react-native-create-thumbnail';
 import messaging from '@react-native-firebase/messaging';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useSelector } from 'react-redux';
+import axios from 'axios';
 
 const PersonalChats = ({ navigation, route }) => {
 
     const { User } = route.params;
-    // console.log("user data from params", User.id)
+    console.log("user data from params", User.fcmToken)
+    console.log(typeof User.fcmToken); // Should print "string"
     const userData = useSelector(state => state.userData)
-    // console.log("userData from redux", userData.id)
+    console.log("userData from redux", userData.fcmToken)
     const chatRoomRef = useRef(null);
 
     const [isFullScreen, setIsFullScreen] = useState(false);
@@ -48,7 +50,6 @@ const PersonalChats = ({ navigation, route }) => {
     const handleLongPress = (messageId) => {
         setSelectedMessageId(messageId);
     };
-
 
     // Function to delete the selected message
     const deleteSelectedMessage = () => {
@@ -221,7 +222,7 @@ const PersonalChats = ({ navigation, route }) => {
                         text: message.text || '',  // Ensure text is not undefined
                         user: {
                             _id: userData.randomNumber || '',  // Ensure the ID is not undefined
-                            name: userData.name || 'Unknown',  // Default to 'Unknown' if name is undefined
+                            name: userData.name || userData.displayName || 'Unknown',  // Default to 'Unknown' if name is undefined
                             avatar: userData.photoUrl || '',   // Default to empty string if photoUrl is undefined
                         },
                         createdAt: new Date(),  // Use a normal Date object for the timestamp
@@ -231,10 +232,8 @@ const PersonalChats = ({ navigation, route }) => {
                     await chatRoomRef.current.update({
                         messages: firestore.FieldValue.arrayUnion(textMessage),
                     });
-
-                    // Send push notification
-                    // Send push notification to the recipient
-                    // await sendPushNotification(User.fcmToken, textMessage);
+                    console.log("Sent textMessage:", textMessage);
+                    await sendPushNotification(User.fcmToken, textMessage);
                 } else {
                     console.error('userData is null');
                     return; // Exit if userData is missing
@@ -247,57 +246,16 @@ const PersonalChats = ({ navigation, route }) => {
         }
     }, [userData, chatRoomRef]);
 
-    const sendPushNotification = async (targetFcmToken, message) => {
-        const FCM_SERVER_KEY = 'K8p6MPczQWSxPDS4rXh4KIruac8JYsQfMCWPfBeU1BE'; // Replace with your FCM Server Key
-
-        // Prepare the notification payload
-        const notificationData = {
-            to: targetFcmToken, // The recipient's FCM token
-            notification: {
-                title: `${message.user.name} sent a message`, // Sender's name
-                body: message.text || 'You have a new message', // Message content
-                sound: 'default',
-            },
-            data: {
-                chatId: message.chatId || '', // Ensure chatId exists or provide a default value
-                senderName: message.user.name || '', // Ensure senderName exists or provide a default value
-                messageId: message._id || '', // Ensure messageId exists or provide a default value
-            },
-        };
-
-        // Set up headers for the FCM request
-        const headers = {
-            'Content-Type': 'application/json',
-            'Authorization': `key=${FCM_SERVER_KEY}`,
-        };
-
+    const sendPushNotification = async (token, message) => {
         try {
-            // Send the notification using FCM REST API
-            const response = await fetch('https://fcm.googleapis.com/fcm/send', {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify(notificationData),
+            const response = await axios.post('http://192.168.42.82:3000/send-notification', {
+                token,
+                title: message.user.name || message.user.displayName,
+                body: message.text,
             });
-
-            // Log the raw response text for debugging
-            const responseText = await response.text();
-            console.log('Raw Response Text:', responseText);
-
-            // Attempt to parse the response as JSON
-            try {
-                const responseData = JSON.parse(responseText);
-                console.log('FCM Response:', responseData);
-            } catch (jsonError) {
-                console.error('Error parsing JSON response:', jsonError);
-            }
-
-            // Check if the response was successful
-            if (!response.ok) {
-                console.error('FCM request failed with status:', response.status);
-                // Optional: Handle specific error statuses (e.g., 401, 403, 500)
-            }
+            console.log('Notification sent:', response.data);
         } catch (error) {
-            console.error('Error sending FCM notification:', error);
+            console.error('Error sending notification:', error);
         }
     };
 

@@ -16,14 +16,7 @@ import {
 } from '../../Components/Pixel/Index';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import fontFamily from '../../../constants/fontFamily';
-import ImageCropPicker from 'react-native-image-crop-picker';
-import EvilIcons from 'react-native-vector-icons/EvilIcons';
-import firestore from '@react-native-firebase/firestore';
 import ImagePicker from 'react-native-image-crop-picker';
-import storage from '@react-native-firebase/storage';
-import auth from '@react-native-firebase/auth';
-import messaging from '@react-native-firebase/messaging';
-// import { ToastContainer, useToast } from 'rn-toastify';
 import { EmailSignup } from '../../config/EmailSignup';
 import { CommonActions } from '@react-navigation/native';
 

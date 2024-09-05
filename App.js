@@ -17,6 +17,34 @@ import Profile from './src/screens/home/Profile';
 import messaging from '@react-native-firebase/messaging';
 import ArchivedChats from './src/screens/home/ArchivedChats';
 import { createSharedElementStackNavigator } from 'react-navigation-shared-element';
+import UserDetailScreen from './src/screens/home/UserDetailScreen';
+import PushNotification from 'react-native-push-notification';
+
+// Setup PushNotification
+PushNotification.configure({
+  // Called when Token is generated (iOS and Android)
+  onRegister: function (token) {
+    console.log('TOKEN:', token);
+  },
+
+  // Called when a remote or local notification is opened or received
+  onNotification: function (notification) {
+    console.log('NOTIFICATION:', notification);
+
+    // process the notification (display alert, navigate, etc.)
+    // You can access notification data here
+    if (notification.data && notification.data.chatId) {
+      // Handle navigation or display logic
+      navigationRef.current?.navigate('PersonalChats', { chatId: notification.data.chatId });
+    }
+
+    // Required on iOS only
+    notification.finish(PushNotificationIOS.FetchResult.NoData);
+  },
+
+  // IOS only
+  requestPermissions: Platform.OS === 'ios',
+});
 
 const Stack = createSharedElementStackNavigator();
 
@@ -43,14 +71,25 @@ function App() {
 
 
   useEffect(() => {
-    // Foreground notification tap handling
-    const unsubscribe = messaging().onNotificationOpenedApp(remoteMessage => {
-      if (remoteMessage?.data?.chatId) {
-        navigationRef.current?.navigate('PersonalChats', { chatId: remoteMessage.data.chatId });
-      }
+    // Handle foreground notifications
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      console.log('Foreground message received!', JSON.stringify(remoteMessage));
+
+      // Display the notification using react-native-push-notification
+      PushNotification.localNotification({
+        channelId: 'default-channel-id',
+        title: remoteMessage.notification.title,
+        message: remoteMessage.notification.body,
+        data: remoteMessage.data,
+      });
     });
 
-    // App opened from a quit state (not running)
+    // Handle notification taps when the app is in the background
+    const backgroundHandler = messaging().setBackgroundMessageHandler(async remoteMessage => {
+      console.log('Background message received!', JSON.stringify(remoteMessage));
+    });
+
+    // Handle notification taps when the app is closed
     messaging()
       .getInitialNotification()
       .then(remoteMessage => {
@@ -59,7 +98,10 @@ function App() {
         }
       });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      backgroundHandler();
+    };
   }, []);
 
 
@@ -73,6 +115,15 @@ function App() {
             <Stack.Screen name="TabStack" component={TabStack} options={{ headerShown: false }} />
             <Stack.Screen name="Profile" component={Profile} options={{ headerShown: false }} />
             <Stack.Screen name="Contacts" component={Contacts} options={{ headerShown: false }} />
+            <Stack.Screen
+              name="UserDetail"
+              component={UserDetailScreen}
+              sharedElements={(route) => {
+                const { userId } = route.params;
+                return [`item.${userId}.photo`];
+              }}
+              options={{ headerShown: false }}
+            />
             <Stack.Screen name="ArchivedChats" component={ArchivedChats} options={{ headerShown: false }} />
             <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
             <Stack.Screen name="AddProfile" component={AddProfile} options={{ headerShown: false }} />

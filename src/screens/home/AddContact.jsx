@@ -57,14 +57,14 @@ const AddContact = ({ navigation }) => {
 
                 // Extract the fields you need
                 const uid = userDoc.id;
-                const { photoUrl, email } = contactData;
+                const { photoUrl, email, fcmToken } = contactData;
 
                 // Log the results for debugging
                 console.log('User ID:', uid);
                 console.log('User Data:', contactData);
 
                 // Return the user data along with the document ID
-                return { uid, photoUrl, email };
+                return { uid, photoUrl, email, fcmToken };
             } else {
                 Alert.alert('User not found');
                 return null;
@@ -95,6 +95,7 @@ const AddContact = ({ navigation }) => {
                     randomNumber: phoneNumber,
                     photoUrl: existingUserData.photoUrl, // Use the found user's photoUrl
                     email: existingUserData.email, // You can store more data if needed
+                    fcmToken: existingUserData.fcmToken
                 };
 
                 const contactRef = firestore().collection('Contacts').doc(userData.id);
