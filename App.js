@@ -39,7 +39,7 @@ PushNotification.configure({
     }
 
     // Required on iOS only
-    notification.finish(PushNotificationIOS.FetchResult.NoData);
+    notification.finish(PushNotification.FetchResult.NoData);
   },
 
   // IOS only
@@ -85,7 +85,7 @@ function App() {
     });
 
     // Handle notification taps when the app is in the background
-    const backgroundHandler = messaging().setBackgroundMessageHandler(async remoteMessage => {
+    messaging().setBackgroundMessageHandler(async remoteMessage => {
       console.log('Background message received!', JSON.stringify(remoteMessage));
     });
 
@@ -99,8 +99,7 @@ function App() {
       });
 
     return () => {
-      unsubscribe();
-      backgroundHandler();
+      unsubscribe(); // Clean up the foreground message handler
     };
   }, []);
 
