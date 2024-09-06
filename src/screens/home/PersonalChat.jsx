@@ -19,20 +19,19 @@ import firestore from '@react-native-firebase/firestore';
 import ImagePicker from 'react-native-image-crop-picker';
 import storage from '@react-native-firebase/storage';
 import Video from 'react-native-video';
-import AudioFile from '../../../assets/image/better-day-186374.mp3';
 import { createThumbnail } from 'react-native-create-thumbnail';
 import messaging from '@react-native-firebase/messaging';
 import { Swipeable } from 'react-native-gesture-handler';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
+import { addChats } from '../../redux/action';
+import { SharedElement } from 'react-navigation-shared-element';
 
 const PersonalChats = ({ navigation, route }) => {
 
+    const dispatch = useDispatch();
     const { User } = route.params;
-    console.log("user data from params", User.fcmToken)
-    console.log(typeof User.fcmToken); // Should print "string"
     const userData = useSelector(state => state.userData)
-    console.log("userData from redux", userData.fcmToken)
     const chatRoomRef = useRef(null);
 
     const [isFullScreen, setIsFullScreen] = useState(false);
@@ -47,29 +46,21 @@ const PersonalChats = ({ navigation, route }) => {
     const [messages, setMessages] = useState([]);
 
     // Function to handle long-press on messages
-    const handleLongPress = (messageId) => {
-        setSelectedMessageId(messageId);
-    };
+    const handleLongPress = (messageId) => setSwipedMessageId(messageId);
 
     // Function to delete the selected message
     const deleteSelectedMessage = () => {
-        if (selectedMessageId) {
-            // Filter out the selected message from the messages array
-            const updatedMessages = messages.filter(message => message._id !== selectedMessageId);
-            setMessages(updatedMessages);
-            setSelectedMessageId(null); // Clear the selected message ID
+        if (swipedMessageId) {
+            setMessages(messages.filter(message => message._id !== swipedMessageId));
+            setSwipedMessageId(null);
         }
     };
 
     const panResponder = useRef(
         PanResponder.create({
-            onMoveShouldSetPanResponderCapture: (evt, gestureState) => {
-                return gestureState.dy > 5; // Set the threshold for swipe down
-            },
-            onPanResponderRelease: (evt, gestureState) => {
-                if (gestureState.dy > 50) { // If the swipe distance is greater than 50 (adjust as needed)
-                    closeFullScreen();
-                }
+            onMoveShouldSetPanResponderCapture: (_, gestureState) => gestureState.dy > 5,
+            onPanResponderRelease: (_, gestureState) => {
+                if (gestureState.dy > 50) closeFullScreen();
             },
         })
     ).current;
@@ -79,24 +70,15 @@ const PersonalChats = ({ navigation, route }) => {
         setSelectedVideo(videoUri);
     };
 
-    const closeFullScreen = () => {
-        setIsFullScreen(false);
-    };
+    const closeFullScreen = () => setIsFullScreen(false);
 
-    const handleTyping = (text) => {
-        // Check if the text input is empty or not
-        setIsTyping(text.length > 0);
-    };
+    const handleTyping = (text) => setIsTyping(text.length > 0);
 
     useEffect(() => {
         const db = firestore();
         const chatRoomId = userData.id < User.id
             ? `${userData.id}_${User.id}`
             : `${User.id}_${userData.id}`;
-
-        console.log("Chat Room ID:", chatRoomId); // Log chatRoomId for debugging
-        console.log("Current User ID:", userData.id); // Log current user ID
-        console.log("Other User ID:", User.id); // Log other user ID
 
         chatRoomRef.current = db.collection('chatRooms').doc(chatRoomId);
 
@@ -106,13 +88,17 @@ const PersonalChats = ({ navigation, route }) => {
 
                 if (!docSnapshot.exists) {
                     // Create the chat room with the correct 'users' array
-                    await chatRoomRef.current.set({
+                    const chatRoomData = {
                         createdAt: firestore.FieldValue.serverTimestamp(),
                         users: [userData.id, User.id], // Ensure 'users' array is set
                         messages: [],
-                        archived: false
-                    });
+                        archived: false,
+                    };
+
+                    await chatRoomRef.current.set(chatRoomData);
                     console.log('Chat room created successfully');
+                    // Dispatch the newly created chat room to Redux
+                    dispatch(addChats({ ...chatRoomData, id: chatRoomId }));
                 } else {
                     console.log('Chat room already exists');
                 }
@@ -210,9 +196,9 @@ const PersonalChats = ({ navigation, route }) => {
         return () => unsubscribe();
     }, []);
 
-
     // Sending messages
     const onSend = useCallback(async (newMessages = []) => {
+
         try {
             for (const message of newMessages) {
                 // Ensure userData is not null and add user info to the message
@@ -248,7 +234,7 @@ const PersonalChats = ({ navigation, route }) => {
 
     const sendPushNotification = async (token, message) => {
         try {
-            const response = await axios.post('http://192.168.42.82:3000/send-notification', {
+            const response = await axios.post(process.env.API_KEY, {
                 token,
                 title: message.user.name || message.user.displayName,
                 body: message.text,
@@ -277,7 +263,7 @@ const PersonalChats = ({ navigation, route }) => {
                             // marginBottom: 5,
                         }}
                     >
-                        <FontAwesome name="send" size={18} color={COLORS.white} />
+                        <FontAwesome name="send" size={18} color={COLORS.tertiaryWhite} />
                     </View>
                 </View>
             </Send>
@@ -328,7 +314,7 @@ const PersonalChats = ({ navigation, route }) => {
 
     const CustomActions = (props) => {
         return (
-            <FontAwesome name="camera" size={24} color="black" />
+            <FontAwesome name="camera" size={hp(3.4)} color={COLORS.darkgray1} />
         );
     };
 
@@ -400,43 +386,29 @@ const PersonalChats = ({ navigation, route }) => {
         };
 
         return (
-            <Swipeable
-                renderLeftActions={(progress, dragX) =>
-                    renderLeftActions(progress, dragX, currentMessage._id, currentMessage)
-                }
-                onSwipeableLeftOpen={() => handleSwipe(currentMessage._id, currentMessage)}
-                onSwipeableClose={() => {
-                    if (swipedMessageId === currentMessage._id) {
-                        // Reset swipedMessageId when the swipe is closed
-                        setSwipedMessageId(null);
-                    }
-                }}
+            <Bubble
+                {...props}
+                wrapperStyle={bubbleStyle}
+                textStyle={textStyle}
             >
-                <Bubble
-                    {...props}
-                    wrapperStyle={bubbleStyle}
-                    textStyle={textStyle}
-                >
-                    {currentMessage.image && renderMessageImage({ ...props, currentMessage })}
-                    {currentMessage.video && renderMessageVideo({ ...props, currentMessage })}
-                    {currentMessage.audio && (
-                        <MessageAudio
-                            {...props}
-                            audioStyle={{ width: wp(100) }} // Adjust as needed
-                        />
-                    )}
+                {currentMessage.image && renderMessageImage({ ...props, currentMessage })}
+                {currentMessage.video && renderMessageVideo({ ...props, currentMessage })}
+                {currentMessage.audio && (
+                    <MessageAudio
+                        {...props}
+                        audioStyle={{ width: wp(100) }} // Adjust as needed
+                    />
+                )}
 
-                </Bubble>
-            </Swipeable>
+            </Bubble>
         );
     };
-
 
     return (
         <ImageBackground source={require('../../../assets/image/wallpaper.webp')}
             style={{ flex: 1 }} resizeMode="cover">
             <SafeAreaView style={{ flex: 1 }}>
-                <StatusBar backgroundColor={COLORS.lightGreen} barStyle="light-content" />
+                <StatusBar backgroundColor={'#ebebeb'} barStyle="dark-content" />
                 <View style={{ flex: 1 }}>
                     {isFullScreen ? (
                         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
@@ -456,19 +428,17 @@ const PersonalChats = ({ navigation, route }) => {
 
                     ) : (
                         <>
-
                             <View
                                 style={styles.header}
                             >
                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                     <TouchableOpacity
                                         onPress={() => navigation.goBack()}
-                                        style={{ marginLeft: -10 }}
                                     >
                                         <AntDesign
                                             name="arrowleft"
                                             size={24}
-                                            style={{ color: COLORS.secondaryWhite }}
+                                            style={{ color: COLORS.darkgray1 }}
                                         />
                                     </TouchableOpacity>
                                     <Image
@@ -480,19 +450,18 @@ const PersonalChats = ({ navigation, route }) => {
                                             marginLeft: 5,
                                         }}
                                     />
-
-                                    <Text style={{ marginLeft: wp(2), color: COLORS.secondaryWhite, fontFamily: fontFamily.FONTS.regular, fontSize: hp(2.5) }}>{User.name || User.displayName}</Text>
+                                    <Text style={{ marginLeft: wp(2), color: COLORS.darkgray1, fontFamily: fontFamily.FONTS.regular, fontSize: hp(2.5) }}>{User.name || User.displayName}</Text>
                                 </View>
                                 {selectedMessageId ? null : ( // Render icons only if no message is selected
                                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                         <TouchableOpacity style={{ marginRight: wp(5) }}>
-                                            <Ionicons name="videocam" size={22} style={{ color: COLORS.secondaryWhite }} />
+                                            <Ionicons name="videocam" size={hp(3.3)} style={{ color: COLORS.darkgray1 }} />
                                         </TouchableOpacity>
                                         <TouchableOpacity style={{ marginRight: wp(5) }} onPress={() => navigation.navigate('VoiceCall', { UserData: User })}>
-                                            <MaterialIcons name="call" size={22} style={{ color: COLORS.secondaryWhite }} />
+                                            <MaterialIcons name="call" size={hp(3.3)} style={{ color: COLORS.darkgray1 }} />
                                         </TouchableOpacity>
                                         <TouchableOpacity>
-                                            <Entypo name="dots-three-vertical" size={22} style={{ color: COLORS.secondaryWhite }} />
+                                            <Entypo name="dots-three-vertical" size={hp(3)} style={{ color: COLORS.darkgray1 }} />
                                         </TouchableOpacity>
                                     </View>
                                 )}
@@ -502,7 +471,6 @@ const PersonalChats = ({ navigation, route }) => {
                                     </TouchableOpacity>
                                 ) : null}
                             </View>
-
 
                             <GiftedChat
                                 messages={messages}
@@ -515,7 +483,6 @@ const PersonalChats = ({ navigation, route }) => {
                                 renderActions={renderActions}
                                 renderInputToolbar={renderInputToolbar}
                                 renderBubble={renderBubble}
-
                                 renderMessageAudio={props => {
                                     // const { currentMessage } = props;
                                     return (
@@ -600,22 +567,26 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingHorizontal: wp(4),
-        backgroundColor: COLORS.lightGreen,
-        height: hp(7.5),
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 1,
+        paddingHorizontal: wp(2),
+        backgroundColor: '#ebebeb',
+        height: hp(6.5),
+        shadowColor: '#000',  // Black shadow
+        shadowOffset: {
+            width: 0,
+            height: 4,  // Drop the shadow downward
+        },
+        shadowOpacity: 0.3,  // Shadow transparency
+        shadowRadius: 4.65,  // Shadow blur radius
+        elevation: 8,  // Android elevation for the shadow
+        // borderRadius: wp(4),
         alignItems: 'center',
     },
     inputToolbar: {
-        borderRadius: 22,
-        borderWidth: 1,
+        borderRadius: wp(5),
+        borderWidth: 0.5,
         borderColor: COLORS.gray,
-        marginRight: 6,
-        paddingHorizontal: 12,
+        marginRight: wp(3),
+        paddingHorizontal: wp(3),
         backgroundColor: COLORS.white,
         color: COLORS.black,
     },

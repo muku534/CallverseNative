@@ -7,9 +7,19 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Entypo from 'react-native-vector-icons/Entypo';
 import { SharedElement } from 'react-navigation-shared-element';
+import { useNavigation } from '@react-navigation/native';
 
-const UserModal = ({ visible, onClose, userData }) => {
+const UserModal = ({ visible, onClose, userData },) => {
+    const navigation = useNavigation();
     if (!userData) return null; // Return null if there's no user data
+
+    const handleNavigation = (screen, data) => {
+        onClose(); // Close the modal first
+        setTimeout(() => {
+            navigation.navigate(screen, { userData: data }); // Navigate to the desired screen after a slight delay
+        }, 300); // Delay for 300ms to ensure the modal has closed
+    }
+
 
     return (
         <Modal
@@ -27,6 +37,7 @@ const UserModal = ({ visible, onClose, userData }) => {
                                 <Image
                                     source={{ uri: userData.photoUrl }}
                                     style={styles.profileImage}
+                                    resizeMode='cover'
                                 />
                             </SharedElement>
 
@@ -39,16 +50,16 @@ const UserModal = ({ visible, onClose, userData }) => {
                         <View style={styles.footer}>
                             <View style={styles.footerButtonsContainer}>
                                 <TouchableOpacity activeOpacity={0.7}>
-                                    <Ionicons name="chatbox-ellipses-outline" size={hp(3.5)} style={styles.footerIcon} />
+                                    <Ionicons name="chatbox-ellipses-outline" size={hp(3.9)} style={styles.footerIcon} />
                                 </TouchableOpacity>
                                 <TouchableOpacity activeOpacity={0.7}>
-                                    <Ionicons name="videocam-outline" size={hp(3.8)} style={styles.footerIcon} />
+                                    <Ionicons name="videocam-outline" size={hp(3.9)} style={styles.footerIcon} />
                                 </TouchableOpacity>
-                                <TouchableOpacity activeOpacity={0.7} onPress={() => navigation.navigate('VoiceCall', { UserData: userData })}>
-                                    <Ionicons name="call-outline" size={hp(3.5)} style={styles.footerIcon} />
+                                <TouchableOpacity activeOpacity={0.7} onPress={() => handleNavigation('VoiceCall', userData)}>
+                                    <Ionicons name="call-outline" size={hp(3.9)} style={styles.footerIcon} />
                                 </TouchableOpacity>
-                                <TouchableOpacity activeOpacity={0.7}>
-                                    <Ionicons name="information-circle-outline" size={hp(3.8)} style={styles.footerIcon} />
+                                <TouchableOpacity activeOpacity={0.7} onPress={() => handleNavigation('UserDetail', userData)}>
+                                    <Ionicons name="information-circle-outline" size={hp(3.9)} style={styles.footerIcon} />
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -74,6 +85,7 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.white,
         borderRadius: wp(2),
         overflow: 'hidden', // Ensure content respects the border radius
+        
     },
     header: {
         position: 'absolute',
@@ -81,7 +93,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         padding: hp(1),
-        backgroundColor: 'rgba(0, 0, 0, 0.6)', // Semi-transparent overlay
+        backgroundColor: 'rgba(0, 0, 0, 0.2)', // Semi-transparent overlay
         // alignItems: 'center',
         justifyContent: 'center',
     },
@@ -92,29 +104,20 @@ const styles = StyleSheet.create({
         color: COLORS.tertiaryWhite,
     },
     content: {
-        height: hp(40),
+        height: hp(41),
         alignItems: 'center',
     },
     profileImage: {
-        width: wp(80),  // Full width of the modal
-        height: hp(35), // Adjust height as needed
-    },
-    userName: {
-        fontSize: hp(2.5),
-        fontWeight: 'bold',
-        color: COLORS.darkgray,
-    },
-    userPhone: {
-        fontSize: hp(2),
-        color: COLORS.darkgray,
-        marginTop: hp(1),
+        width: wp(70),
+        height: wp(70),
+        borderRadius: wp(70)
     },
     footer: {
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: 'rgba(0, 0, 0, 1)', // Semi-transparent overlay
+        backgroundColor: '#f2f5f5', // Semi-transparent overlay
         paddingVertical: hp(1),
         alignItems: 'center',
     },
@@ -125,6 +128,6 @@ const styles = StyleSheet.create({
         width: '80%',
     },
     footerIcon: {
-        color: COLORS.secondaryWhite,
+        color: COLORS.lightGreen,
     },
 });

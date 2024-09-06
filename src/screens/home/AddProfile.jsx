@@ -33,7 +33,6 @@ const AddProfile = ({ route, navigation }) => {
     const [phoneNumber, setPhoneNumber] = useState(randomNumber);
     const [loading, setLoading] = useState(false)
 
-
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -51,7 +50,6 @@ const AddProfile = ({ route, navigation }) => {
 
         fetchData();
     }, []);
-
 
     const toggleMenu = () => {
         setShowMenu(!showMenu);
@@ -83,7 +81,7 @@ const AddProfile = ({ route, navigation }) => {
 
         try {
             setLoading(true)
-            const user = await EmailSignup({ email, password, name, randomNumber })
+            const user = await EmailSignup({ email, password, name, randomNumber, selectedImage })
             if (user) {
                 ToastAndroid.show('User created successfully', ToastAndroid.SHORT);
                 navigation.dispatch(

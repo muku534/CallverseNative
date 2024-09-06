@@ -183,6 +183,32 @@ const Chats = ({ navigation }) => {
         }
     };
 
+    const deleteSelectedChats = async () => {
+        const previousChatsState = [...chatRoom]; // Keep a copy of the current state
+
+        try {
+            // Optimistically update local state before Firestore operation
+            const updatedChatsState = chatRoom.filter(chat => !selectedChats.includes(chat));
+            setUpdatedChats(updatedChatsState); // Update state optimistically
+            dispatch(fetchChatsRoom(updatedChatsState)); // Dispatch updated chats
+
+            // Show a Toast message to inform the user (Android only)
+            ToastAndroid.show("Chat(s) deleted.", ToastAndroid.SHORT);
+
+            // Perform Firestore deletion
+            await Promise.all(selectedChats.map(async chat => {
+                await firestore().collection('chatRooms').doc(chat.id).delete();
+            }));
+
+            // Clear selection after deletion
+            setSelectedChats([]);
+        } catch (error) {
+            console.error("Error deleting chats:", error);
+            // Revert to previous state in case of error
+            setUpdatedChats(previousChatsState);
+            ToastAndroid.show("An error occurred while deleting the chat(s). Please try again.", ToastAndroid.SHORT);
+        }
+    };
 
 
     // Function to handle opening the modal

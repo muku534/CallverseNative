@@ -26,7 +26,7 @@ const AddContact = ({ navigation }) => {
     const [phoneNumber, setPhoneNumber] = useState('');
     const userData = useSelector(state => state.userData)
     console.log("userId", userData.id)
-
+    const [loading, setLoading] = useState(false)
 
     const checkUserByPhoneNumber = async (phoneNumber) => {
         try {
@@ -76,8 +76,8 @@ const AddContact = ({ navigation }) => {
         }
     };
 
-
     const saveContact = async () => {
+        setLoading(true)
         if (!contactName || !phoneNumber) {
             ToastAndroid.show('Please enter name and number', ToastAndroid.SHORT);
             return;
@@ -126,6 +126,8 @@ const AddContact = ({ navigation }) => {
         } catch (error) {
             console.error('Error saving contact:', error);
             Alert.alert('Error saving contact');
+        } finally {
+            setLoading(false)
         }
     };
 
@@ -169,11 +171,16 @@ const AddContact = ({ navigation }) => {
                             />
                         </View>
 
-                        <View style={{ marginTop: hp(5) }}>
-                            <TouchableOpacity style={{ backgroundColor: COLORS.lightGreen, alignItems: 'center', justifyContent: 'center', borderRadius: wp(7) }} onPress={() => saveContact()}>
-                                <Text style={{ padding: hp(1.5), fontWeight: 'bold', fontSize: hp(2.4), color: COLORS.tertiaryWhite }}>Save</Text>
-                            </TouchableOpacity>
-                        </View>
+                        <Button
+                            title="Save"
+                            // filled
+                            onPress={() => saveContact()}
+                            style={{
+                                marginVertical: hp(4),
+                            }}
+                            loading={loading}
+                        />
+
                     </View>
                 </View>
             </ScrollView>

@@ -7,7 +7,7 @@ const COLORS = {
   white: '#FFFFFF',
   secondaryWhite: '#F7F7FC',
   tertiaryWhite: '#fafafa',
-  green: '#d2f8d2',
+  green: '#D9FDD3',
   primarygreen: '#017561',
   darkGreeen: '#075E54',
   // black: '#000000',

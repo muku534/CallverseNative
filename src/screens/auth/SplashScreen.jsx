@@ -4,7 +4,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react-native/no-inline-styles */
 /* eslint-disable prettier/prettier */
-import { StyleSheet, Text, View } from 'react-native';
+import { StatusBar, StyleSheet, Text, View } from 'react-native';
 import React, { useEffect } from 'react';
 import LottieView from 'lottie-react-native';
 import auth from '@react-native-firebase/auth';
@@ -160,12 +160,15 @@ const SplashScreen = ({ navigation }) => {
     }, []);
 
     return (
-        <LottieView
-            source={require('../../../assets/image/Animation - 1706440302011.json')}
-            autoPlay
-            loop={true}
-            style={{ width: '100%', height: '100%' }} // Add this line
-        />
+        <>
+            <StatusBar backgroundColor={'#f2f2f2'} barStyle="dark-content" />
+            <LottieView
+                source={require('../../../assets/image/Animation - 1706440302011.json')}
+                autoPlay
+                loop={true}
+                style={{ width: '100%', height: '100%' }} // Add this line
+            />
+        </>
     )
 }
 
