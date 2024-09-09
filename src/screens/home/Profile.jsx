@@ -2,32 +2,21 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react-native/no-inline-styles */
 /* eslint-disable prettier/prettier */
-import { View, Text, Pressable, Image, Alert, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, Modal, TextInput, StatusBar, Share, Linking } from 'react-native';
+import { View, Text, Image, SafeAreaView, StyleSheet, TouchableOpacity, Modal, StatusBar, Share, ScrollView } from 'react-native';
 import React, { useEffect, useState } from 'react';
-import LinearGradient from 'react-native-linear-gradient';
 import COLORS from '../../../constants/colors';
-import { FONTS, SIZES, images } from '../../../constants';
-import Button from '../../Components/Button';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import {
     heightPercentageToDP as hp,
     widthPercentageToDP as wp,
 } from '../../Components/Pixel/Index';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import fontFamily from '../../../constants/fontFamily';
-import ImageCropPicker from 'react-native-image-crop-picker';
-import EvilIcons from 'react-native-vector-icons/EvilIcons';
-import firestore from '@react-native-firebase/firestore';
-import ImagePicker from 'react-native-image-crop-picker';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Entypo from 'react-native-vector-icons/Entypo';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-// import firestore from '@react-native-firebase/firestore';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { firebase } from '@react-native-firebase/firestore';
-import storage from '@react-native-firebase/storage';
-import messaging from '@react-native-firebase/messaging';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../redux/action';
 import AndroidOpenSettings from 'react-native-android-open-settings'
@@ -101,213 +90,198 @@ const Profile = ({ navigation }) => {
     return (
         <SafeAreaView style={{ flex: 1, }}>
             <StatusBar backgroundColor={'#f2f2f2'} barStyle="dark-content" />
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: hp(6), padding: wp(2), marginHorizontal: wp(2.3) }}>
-                <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.primarygreen, fontSize: hp(3), fontWeight: 'bold' }}>Settings</Text>
-            </View>
-
-            <View style={styles.container}>
-                {/*<View style={styles.header}>
-                    <Text >Settings</Text>
-                </View> */}
-
-                <View style={styles.userInformation}>
-
-                    <View style={styles.imageContainer}>
-                        <Image source={{ uri: userData?.photoUrl }} style={styles.userImage} />
-                    </View>
-                    <View style={styles.userNameContainer}>
-                        <Text style={styles.nameText}>
-                            {userData?.displayName}
-                        </Text>
-                        <Text style={styles.randomNumber}> {userData?.randomNumber} </Text>
-                    </View>
-
-                    {/** <TouchableOpacity onPress={() => navigation.navigate('AddProfile')} style={styles.rightArrow}>
-                        <MaterialIcons name="keyboard-arrow-right" size={24}
-                            color={COLORS.black} />
-                    </TouchableOpacity> */}
+            <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: hp(6), padding: wp(2), marginHorizontal: wp(2.3) }}>
+                    <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.primarygreen, fontSize: hp(3), fontWeight: 'bold' }}>Settings</Text>
                 </View>
-                <View style={styles.menuContainer}>
-                    <TouchableOpacity onPress={toggleMenu}
-                        style={styles.TouchableOpacity}
-                        activeOpacity={0.7}
-                    >
-                        <View style={styles.menuItems}>
-                            <Entypo name="light-down"
-                                size={24}
-                                color={COLORS.black} />
-                            <Text style={styles.menuText}>
-                                Appearance
-                            </Text>
+                <View style={styles.container}>
+                    <TouchableOpacity activeOpacity={0.5} onPress={() => navigation.navigate('EditProfile')} style={{ borderTopWidth: wp(0.1), borderBottomWidth: wp(0.1), borderColor: COLORS.gray }}>
+                        <View style={styles.userInformation}>
+                            <View style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                            }}>
+                                <View style={styles.imageContainer}>
+                                    <Image source={{ uri: userData?.photoUrl }} style={styles.userImage} />
+                                </View>
+                                <View style={styles.userNameContainer}>
+                                    <Text style={styles.nameText}>
+                                        {userData?.displayName}
+                                    </Text>
+                                    <Text style={styles.randomNumber}> {userData?.randomNumber} </Text>
+                                </View>
+                            </View>
+                            <AntDesign
+                                name="downcircleo"
+                                size={hp(3)}
+                                color={COLORS.primarygreen} />
                         </View>
-                        <AntDesign
-                            name="caretright"
-                            size={hp(2.5)}
-                            color={COLORS.primarygreen} />
                     </TouchableOpacity>
 
-                    <Modal visible={showMenu} transparent animationType="fade">
+                    <View style={styles.menuContainer}>
+                        <TouchableOpacity onPress={toggleMenu}
+                            style={styles.TouchableOpacity}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.menuItems}>
+                                <Entypo name="light-down"
+                                    size={hp(3.7)}
+                                    color={COLORS.black} />
+                                <View>
+                                    <Text style={styles.modalText}>Appearance</Text>
+                                    <Text style={styles.modalSubText}>Customize the theme and display settings</Text>
+                                </View>
+                            </View>
+
+                        </TouchableOpacity>
+
+                        <Modal visible={showMenu} transparent animationType="fade">
+                            <TouchableOpacity
+                                style={styles.model}
+                                onPress={toggleMenu}
+                                activeOpacity={0.7}
+                            >
+                                <View style={{
+                                    backgroundColor: COLORS.white, borderRadius: wp(2), padding: hp(3), width: wp(60),
+                                    height: hp(20),
+                                }}>
+                                    <TouchableOpacity style={{ paddingVertical: 8 }} onPress={() => handleMenuOption('viewProfile')}>
+                                        <Text >Light</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={{ paddingVertical: 8 }} onPress={() => handleMenuOption('removeProfile')}>
+                                        <Text >Dark</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </TouchableOpacity>
+                        </Modal>
+
+                        <TouchableOpacity onPress={() => AndroidOpenSettings.appNotificationSettings()}
+                            style={styles.TouchableOpacity}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.menuItems}>
+                                <Ionicons name="notifications-outline"
+                                    size={hp(3.7)}
+                                    color={COLORS.black} />
+                                <View>
+                                    <Text style={styles.modalText}>Notifications</Text>
+                                    <Text style={styles.modalSubText}>Manage your notification preferences</Text>
+                                </View>
+                            </View>
+
+                        </TouchableOpacity>
+
+                        <TouchableOpacity onPress={() => {
+                            console.log('presser');
+                        }}
+                            style={styles.TouchableOpacity}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.menuItems}>
+                                <MaterialCommunityIcons name="shield-lock-open-outline"
+                                    size={hp(3.7)}
+                                    color={COLORS.black} />
+                                <View>
+                                    <Text style={styles.modalText}>Privacy</Text>
+                                    <Text style={styles.modalSubText}>Control your privacy settings</Text>
+                                </View>
+
+                            </View>
+
+                        </TouchableOpacity>
+
+                        <TouchableOpacity onPress={() => AndroidOpenSettings.appDetailsSettings()}
+                            style={styles.TouchableOpacity}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.menuItems}>
+                                <MaterialIcons name="storage"
+                                    size={hp(3.7)}
+                                    color={COLORS.black} />
+                                <View>
+                                    <Text style={styles.modalText}>Data usage</Text>
+                                    <Text style={styles.modalSubText}>Manage your data and storage usage</Text>
+                                </View>
+
+                            </View>
+
+                        </TouchableOpacity>
+
+                        <TouchableOpacity onPress={() => {
+                            console.log('presser');
+                        }}
+                            style={styles.TouchableOpacity}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.menuItems}>
+                                <Ionicons name="help-circle-outline"
+                                    size={hp(4)}
+                                    color={COLORS.black} />
+                                <View>
+                                    <Text style={styles.modalText}>Help</Text>
+                                    <Text style={styles.modalSubText}>Get help and support for the app</Text>
+                                </View>
+                            </View>
+
+                        </TouchableOpacity>
+
+                        <TouchableOpacity onPress={handleShare}
+                            style={styles.TouchableOpacity}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.menuItems}>
+                                <MaterialCommunityIcons name="email-outline"
+                                    size={hp(3.7)}
+                                    color={COLORS.black} />
+                                <View>
+                                    <Text style={styles.modalText}>Invite Your Friends</Text>
+                                    <Text style={styles.modalSubText}>Share the app with your friends</Text>
+                                </View>
+                            </View>
+
+                        </TouchableOpacity>
+
                         <TouchableOpacity
-                            style={styles.model}
-                            onPress={toggleMenu}
+                            style={styles.logOutContainer}
+                            onPress={handleLogout}
                             activeOpacity={0.7}
                         >
                             <View style={{
-                                backgroundColor: COLORS.white, borderRadius: wp(2), padding: hp(3), width: wp(60),
-                                height: hp(20),
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'center',
                             }}>
-                                <TouchableOpacity style={{ paddingVertical: 8 }} onPress={() => handleMenuOption('viewProfile')}>
-                                    <Text >Light</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={{ paddingVertical: 8 }} onPress={() => handleMenuOption('removeProfile')}>
-                                    <Text >Dark</Text>
-                                </TouchableOpacity>
+                                <MaterialCommunityIcons name="logout-variant"
+                                    size={hp(3.5)}
+                                    color={COLORS.black} />
+                                <Text style={{ marginLeft: wp(2), color: 'red', fontFamily: fontFamily.FONTS.Medium, fontSize: hp(2.6) }}>
+                                    Logout
+                                </Text>
                             </View>
                         </TouchableOpacity>
-                    </Modal>
-
-                    <TouchableOpacity onPress={() => AndroidOpenSettings.appNotificationSettings()}
-                        style={styles.TouchableOpacity}
-                        activeOpacity={0.7}
-                    >
-                        <View style={styles.menuItems}>
-                            <Ionicons name="notifications-outline"
-                                size={24}
-                                color={COLORS.black} />
-                            <Text style={styles.menuText}>
-                                Notifications
-                            </Text>
-                        </View>
-                        <AntDesign
-                            name="caretright"
-                            size={hp(2.5)}
-                            color={COLORS.primarygreen} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity onPress={() => {
-                        console.log('presser');
-                    }}
-                        style={styles.TouchableOpacity}
-                        activeOpacity={0.7}
-                    >
-                        <View style={styles.menuItems}>
-                            <MaterialCommunityIcons name="shield-lock-open-outline"
-                                size={24}
-                                color={COLORS.black} />
-                            <Text style={styles.menuText}>
-                                Privacy
-                            </Text>
-                        </View>
-                        <AntDesign
-                            name="caretright"
-                            size={hp(2.5)}
-                            color={COLORS.primarygreen} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity onPress={() => AndroidOpenSettings.appDetailsSettings()}
-                        style={styles.TouchableOpacity}
-                        activeOpacity={0.7}
-                    >
-                        <View style={styles.menuItems}>
-                            <AntDesign name="folder1"
-                                size={24}
-                                color={COLORS.black} />
-                            <Text style={styles.menuText}>
-                                Data usage
-                            </Text>
-                        </View>
-                        <AntDesign
-                            name="caretright"
-                            size={hp(2.5)}
-                            color={COLORS.primarygreen} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity onPress={() => {
-                        console.log('presser');
-                    }}
-                        style={styles.TouchableOpacity}
-                        activeOpacity={0.7}
-                    >
-                        <View style={styles.menuItems}>
-                            <Ionicons name="help-circle-outline"
-                                size={24}
-                                color={COLORS.black} />
-                            <Text style={styles.menuText}>
-                                Help
-                            </Text>
-                        </View>
-                        <AntDesign
-                            name="caretright"
-                            size={hp(2.5)}
-                            color={COLORS.primarygreen} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity onPress={handleShare}
-                        style={styles.TouchableOpacity}
-                        activeOpacity={0.7}
-                    >
-                        <View style={styles.menuItems}>
-                            <MaterialCommunityIcons name="email-outline"
-                                size={24}
-                                color={COLORS.black} />
-                            <Text style={styles.menuText}>
-                                Invite Your Friends
-                            </Text>
-                        </View>
-                        <AntDesign
-                            name="caretright"
-                            size={hp(2.5)}
-                            color={COLORS.primarygreen} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.logOutContainer}
-                        onPress={handleLogout}
-                        activeOpacity={0.7}
-                    >
-                        <View style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginTop: hp(10),
-                        }}>
-                            <MaterialCommunityIcons name="logout-variant"
-                                size={hp(3.5)}
-                                color={COLORS.black} />
-                            <Text style={{ marginLeft: wp(2), color: 'red', fontFamily: fontFamily.FONTS.Medium, fontSize: hp(2.6) }}>
-                                Logout
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
+                    </View>
                 </View>
-            </View>
+            </ScrollView>
         </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        // flex: 1
-        marginVertical: hp(3),
+        marginVertical: hp(1),
     },
-    // header: {
-    //     flexDirection: 'row',
-    //     justifyContent: 'center',
-    //     alignItems: 'center',
-    //     paddingHorizontal: 22,
-    //     marginVertical: 22,
-    //     marginTop: 15,
-    // },
     userInformation: {
         flexDirection: 'row',
         alignItems: 'center',
-        // justifyContent: 'center',
-        marginHorizontal: wp(7),
+        justifyContent: 'space-between',
+        marginLeft: wp(7),
+        marginRight: wp(4),
+        marginBottom: hp(1.5),
+        marginTop: hp(1.5)
     },
     imageContainer: {
         height: hp(5),
         width: wp(12),
-        // borderRadius: ,
         backgroundColor: COLORS.secondaryWhite,
         alignItems: 'center',
         justifyContent: 'center',
@@ -321,20 +295,16 @@ const styles = StyleSheet.create({
     userNameContainer: {
         flexDirection: 'column',
         justifyContent: 'center',
-        alignItems: 'center',
-        // marginHorizontal: wp(7)
+        alignItems: 'flex-start',
+        marginHorizontal: wp(7)
     },
     nameText: {
-        // ...FONTS.h4,
-        // marginVertical: hp(1),
         fontFamily: fontFamily.FONTS.Medium,
         fontSize: hp(2.4),
-        // fontWeight: '600',
         color: COLORS.black,
-        marginHorizontal: wp(25),
+        paddingLeft: wp(1)
     },
     randomNumber: {
-        // ...FONTS.body3,
         color: COLORS.darkgray1,
         fontFamily: fontFamily.FONTS.regular,
         fontSize: hp(2.2),
@@ -343,10 +313,9 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         alignItems: 'flex-end',
         justifyContent: 'flex-end',
-        // marginLeft: 55,
     },
     menuContainer: {
-        marginVertical: hp(4),
+        marginVertical: hp(1),
     },
     TouchableOpacity: {
         flexDirection: 'row',
@@ -354,7 +323,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginVertical: hp(1.3),
         marginHorizontal: wp(4),
-        // paddingVertical: 12,
     },
     menuItems: {
         flexDirection: 'row',
@@ -362,13 +330,10 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     menuText: {
-        // ...FONTS.h4,
         fontFamily: fontFamily.FONTS.regular,
-        fontSize: hp(2.6),
+        fontSize: hp(2.5),
         color: COLORS.black,
         marginLeft: wp(5),
-        // justifyContent:'center',
-        // alignItems:'center',
     },
     model: {
         flex: 1,
@@ -376,12 +341,29 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
+    modalText: {
+        color: COLORS.darkgray,
+        fontSize: hp(2.2),
+        paddingHorizontal: wp(2.7),
+    },
+    modalSubText: {
+        color: '#a6a6a6',
+        fontWeight: '600',
+        fontSize: hp(1.9),
+        paddingHorizontal: wp(2.7),
+    },
     logOutContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
         marginHorizontal: wp(4),
-        // marginVertical: hp(3),
+        marginTop: hp(10),
         alignItems: 'center',
+    },
+    divider: {
+        width: '100%',
+        height: 0.4,
+        backgroundColor: COLORS.gray, // Adjust color as needed
+        // marginVertical: hp(0.5), // Spacing around the divider
     },
 });
 export default Profile;

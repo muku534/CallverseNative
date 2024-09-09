@@ -19,6 +19,7 @@ import ArchivedChats from './src/screens/home/ArchivedChats';
 import { createSharedElementStackNavigator } from 'react-navigation-shared-element';
 import UserDetailScreen from './src/screens/home/UserDetailScreen';
 import PushNotification from 'react-native-push-notification';
+import EditProfile from './src/screens/home/EditProfile';
 
 // Setup PushNotification
 PushNotification.configure({
@@ -126,6 +127,7 @@ function App() {
             <Stack.Screen name="ArchivedChats" component={ArchivedChats} options={{ headerShown: false }} />
             <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
             <Stack.Screen name="AddProfile" component={AddProfile} options={{ headerShown: false }} />
+            <Stack.Screen name="EditProfile" component={EditProfile} options={{ headerShown: false }} />
             <Stack.Screen name="AddContact" component={AddContact} options={{ headerShown: false }} />
             <Stack.Screen name="PersonalChats" component={PersonalChats} options={{ headerShown: false }} />
             <Stack.Screen name="VoiceCall" component={VoiceCall} options={{ headerShown: false }} />
