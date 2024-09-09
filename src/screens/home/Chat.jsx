@@ -252,28 +252,35 @@ const Chats = ({ navigation }) => {
             ) : (
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: hp(6), padding: wp(2), marginHorizontal: wp(2.3) }}>
                     {selectedChats.length > 0 ? (
-                        <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.primarygreen, fontSize: hp(3), fontWeight: '700', marginHorizontal: wp(2) }}>
+                        <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.primarygreen, fontSize: hp(2.7), fontWeight: '700', marginHorizontal: wp(2) }}>
                             {selectedChats.length} Selected {selectedChats.length > 1}
                         </Text>
                     ) : (
-                        <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.primarygreen, fontSize: hp(3), fontWeight: 'bold' }}>CallVerse</Text>
+                        <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.primarygreen, fontSize: hp(3.4), fontWeight: 'bold' }}>CallVerse</Text>
                     )}
                     {selectedChats.length > 0 ? (
-                        <TouchableOpacity onPress={archiveSelectedChats} style={{ width: wp(8) }}>
-                            <MaterialIcons name="archive" size={hp(3.3)} color={COLORS.darkgray} />
-                        </TouchableOpacity>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', }}>
+                            <TouchableOpacity onPress={archiveSelectedChats} style={{ width: wp(8), marginHorizontal: wp(3.5) }}>
+                                <MaterialIcons name="archive" size={hp(3.6)} color={COLORS.darkgray} />
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={deleteSelectedChats}>
+                                <MaterialCommunityIcons name="delete" size={hp(3.6)} color={COLORS.darkgray} />
+                            </TouchableOpacity>
+                        </View>
+
                     ) : (
                         <View style={{ flexDirection: 'row', alignItems: 'center', }}>
                             <TouchableOpacity onPress={toggelInput} style={{ marginHorizontal: wp(3.5) }}>
-                                <Iconics name="search" size={hp(3.3)} color={COLORS.darkgray} />
+                                <Iconics name="search" size={hp(3.6)} color={COLORS.darkgray} />
                             </TouchableOpacity>
                             <TouchableOpacity>
-                                <MaterialCommunityIcons name="phone-log-outline" size={hp(3.3)} color={COLORS.darkgray} />
+                                <MaterialCommunityIcons name="phone-log-outline" size={hp(3.6)} color={COLORS.darkgray} />
                             </TouchableOpacity>
                         </View>
                     )}
                 </View>
-            )}
+            )
+            }
 
             <View style={{ marginVertical: hp(1) }}>
                 <FlatList
@@ -313,8 +320,8 @@ const Chats = ({ navigation }) => {
                                     )}
                                 </View>
                                 <View style={{ flexDirection: 'column', marginLeft: wp(2.2), }}>
-                                    <Text style={{ fontFamily: fontFamily.FONTS.Medium, fontSize: hp(2.2), color: COLORS.darkgray }} numberOfLines={1}>{item.otherUser.name || item.otherUser.displayName}</Text>
-                                    <Text style={{ fontFamily: fontFamily.FONTS.regular, fontSize: hp(1.8), color: COLORS.primarygray }} numberOfLines={1}>{item.message}</Text>
+                                    <Text style={{ fontFamily: fontFamily.FONTS.Medium, fontSize: hp(2.3), color: COLORS.darkgray }} numberOfLines={1}>{item.otherUser.name || item.otherUser.displayName}</Text>
+                                    <Text style={{ fontFamily: fontFamily.FONTS.regular, fontSize: hp(1.9), color: COLORS.primarygray }} numberOfLines={1}>{item.message}</Text>
                                 </View>
                             </View>
                         </TouchableOpacity>

@@ -11,13 +11,14 @@ import { useNavigation } from '@react-navigation/native';
 
 const UserModal = ({ visible, onClose, userData },) => {
     const navigation = useNavigation();
+    console.log("UserData", userData)
     if (!userData) return null; // Return null if there's no user data
 
     const handleNavigation = (screen, data) => {
         onClose(); // Close the modal first
         setTimeout(() => {
-            navigation.navigate(screen, { userData: data }); // Navigate to the desired screen after a slight delay
-        }, 300); // Delay for 300ms to ensure the modal has closed
+            navigation.navigate(screen, data); // Navigate to the desired screen after a slight delay
+        }, 50); // Delay for 300ms to ensure the modal has closed
     }
 
 
@@ -26,20 +27,22 @@ const UserModal = ({ visible, onClose, userData },) => {
             visible={visible}
             transparent={true}
             animationType='fade'
-            onRequestClose={onClose}
+        // onRequestClose={onClose}
         >
 
             <TouchableWithoutFeedback onPress={onClose}>
                 <View style={styles.modalBackground}>
                     <View style={styles.modalContainer}>
                         <View style={styles.content}>
-                            <SharedElement id={`item.${userData.id}.photo`}>
-                                <Image
-                                    source={{ uri: userData.photoUrl }}
-                                    style={styles.profileImage}
-                                    resizeMode='cover'
-                                />
-                            </SharedElement>
+                            <TouchableOpacity activeOpacity={0.9} onPress={() => handleNavigation('UserDetail', userData)}>
+                                <SharedElement id={`item.${userData.id}.photo`}>
+                                    <Image
+                                        source={{ uri: userData.photoUrl }}
+                                        style={styles.profileImage}
+                                        resizeMode='cover'
+                                    />
+                                </SharedElement>
+                            </TouchableOpacity>
 
                             {/* Header Overlay */}
                             <View style={styles.header}>
@@ -85,7 +88,7 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.white,
         borderRadius: wp(2),
         overflow: 'hidden', // Ensure content respects the border radius
-        
+
     },
     header: {
         position: 'absolute',

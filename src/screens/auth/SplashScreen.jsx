@@ -1,9 +1,3 @@
-/* eslint-disable prettier/prettier */
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable prettier/prettier */
-/* eslint-disable no-unused-vars */
-/* eslint-disable react-native/no-inline-styles */
-/* eslint-disable prettier/prettier */
 import { StatusBar, StyleSheet, Text, View } from 'react-native';
 import React, { useEffect } from 'react';
 import LottieView from 'lottie-react-native';
@@ -28,7 +22,6 @@ const SplashScreen = ({ navigation }) => {
                 const userData = JSON.parse(cachedUserData);
                 console.log('User data fetched from cache:', userData.randomNumber);
                 dispatch(loginUser(userData));
-                await getContacts(userId)
                 return userData;
             }
 
@@ -128,9 +121,12 @@ const SplashScreen = ({ navigation }) => {
                     const userId = currentUser.uid;
                     console.log('Authenticated user ID:', userId);
 
-                    // Fetch user data from Firestore or cache
-                    await fetchUserData(userId);
-                    await getChats(userId)
+                    // Fetch user data and chats in parallel
+                    await Promise.all([
+                        fetchUserData(userId),
+                        getContacts(userId),
+                        getChats(userId)
+                    ]);
 
                     // // Navigate to the home screen or other protected screens
                     navigation.dispatch(

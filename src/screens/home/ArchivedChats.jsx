@@ -119,7 +119,7 @@ const ArchivedChats = ({ navigation }) => {
             {searchVisible ? (
                 <View style={{}}>
                     <View style={{ width: '90%', marginVertical: hp(1), marginHorizontal: wp(5), flexDirection: 'row', justifyContent: 'center', backgroundColor: '#e8e8e8', borderRadius: wp(4) }}>
-                        <TouchableOpacity onPress={toggelInput} style={{ marginLeft: wp(10) }}>
+                        <TouchableOpacity onPress={toggelInput} style={{ marginLeft: wp(10) }} >
                             <AntDesign name="arrowleft" size={hp(3)} color={COLORS.black} style={{ position: 'absolute', left: 10, top: 10 }} />
                         </TouchableOpacity>
                         <TextInput
@@ -140,7 +140,7 @@ const ArchivedChats = ({ navigation }) => {
                 </View>
             ) : (
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: hp(6), padding: wp(2), marginHorizontal: wp(1) }}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={{ flexDirection: 'row', alignItems: 'center' }} activeOpacity={0.7}>
                         <AntDesign name="arrowleft" size={hp(3)} color={COLORS.black} />
                         {selectedChats.length > 0 ? (
                             <Text style={{ fontFamily: fontFamily.FONTS.bold, color: COLORS.primarygreen, fontSize: hp(3), fontWeight: '700', marginHorizontal: wp(2) }}>

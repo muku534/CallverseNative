@@ -19,6 +19,7 @@ import Entypo from 'react-native-vector-icons/Entypo';
 import { useSelector } from 'react-redux';
 import { SharedElement } from 'react-navigation-shared-element';
 import UserModal from '../../Components/UserModel/UserModel';
+import { fetchContacts } from '../../redux/action';
 
 
 const Contacts = ({ navigation }) => {
@@ -64,6 +65,33 @@ const Contacts = ({ navigation }) => {
         setIsModalVisible(false);
         setSelectedUser(null);
     };
+
+    const deleteSelectedChats = async () => {
+        const previousContactsState = [...contacts]; // Keep a copy of the current state
+
+        try {
+            // Optimistically update local state before Firestore operation
+            const updatedContactsState = contacts.filter(contact => !selectedChats.includes(contact));
+            setUpdatedChats(updatedContactsState); // Update state optimistically
+            dispatch(fetchContacts(updatedContactsState)); // Dispatch updated chats
+
+            // Show a Toast message to inform the user (Android only)
+            ToastAndroid.show("Contact(s) deleted.", ToastAndroid.SHORT);
+
+            // Perform Firestore deletion
+            await Promise.all(selectedChats.map(async contact => {
+                await firestore().collection('Contacts').doc(contact.id).delete();
+            }));
+
+            // Clear selection after deletion
+            setSelectedContact([]);
+        } catch (error) {
+            console.error("Error deleting chats:", error);
+            // Revert to previous state in case of error
+            ToastAndroid.show("An error occurred while deleting the chat(s). Please try again.", ToastAndroid.SHORT);
+        }
+    };
+
 
     return (
         <SafeAreaView style={{ flex: 1 }}>

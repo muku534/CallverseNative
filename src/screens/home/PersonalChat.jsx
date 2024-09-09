@@ -441,24 +441,29 @@ const PersonalChats = ({ navigation, route }) => {
                                             style={{ color: COLORS.darkgray1 }}
                                         />
                                     </TouchableOpacity>
-                                    <Image
-                                        source={{ uri: User.photoUrl }}
-                                        style={{
-                                            height: wp(10),
-                                            width: wp(10),
-                                            borderRadius: wp(10),
-                                            marginLeft: 5,
-                                        }}
-                                    />
+
+                                    <TouchableOpacity activeOpacity={0.9} onPress={() => navigation.navigate('UserDetail', User)}>
+                                        <SharedElement id={`item.${User.id}.photo`}>
+                                            <Image
+                                                source={{ uri: User.photoUrl }}
+                                                style={{
+                                                    height: wp(10),
+                                                    width: wp(10),
+                                                    borderRadius: wp(10),
+                                                    marginLeft: 5,
+                                                }}
+                                            />
+                                        </SharedElement>
+                                    </TouchableOpacity>
                                     <Text style={{ marginLeft: wp(2), color: COLORS.darkgray1, fontFamily: fontFamily.FONTS.regular, fontSize: hp(2.5) }}>{User.name || User.displayName}</Text>
                                 </View>
                                 {selectedMessageId ? null : ( // Render icons only if no message is selected
                                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                        <TouchableOpacity style={{ marginRight: wp(5) }}>
-                                            <Ionicons name="videocam" size={hp(3.3)} style={{ color: COLORS.darkgray1 }} />
+                                        <TouchableOpacity style={{ marginRight: wp(7) }}>
+                                            <Ionicons name="videocam-outline" size={hp(3.7)} style={{ color: COLORS.darkgray1 }} />
                                         </TouchableOpacity>
-                                        <TouchableOpacity style={{ marginRight: wp(5) }} onPress={() => navigation.navigate('VoiceCall', { UserData: User })}>
-                                            <MaterialIcons name="call" size={hp(3.3)} style={{ color: COLORS.darkgray1 }} />
+                                        <TouchableOpacity style={{ marginRight: wp(7) }} onPress={() => navigation.navigate('VoiceCall', { UserData: User })}>
+                                            <Ionicons name="call-outline" size={hp(3.5)} style={{ color: COLORS.darkgray1 }} />
                                         </TouchableOpacity>
                                         <TouchableOpacity>
                                             <Entypo name="dots-three-vertical" size={hp(3)} style={{ color: COLORS.darkgray1 }} />
@@ -569,7 +574,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: wp(2),
         backgroundColor: '#ebebeb',
-        height: hp(6.5),
+        height: hp(7.4),
         shadowColor: '#000',  // Black shadow
         shadowOffset: {
             width: 0,
