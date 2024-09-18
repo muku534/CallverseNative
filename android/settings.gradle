@@ -9,3 +9,4 @@ include ':app'
 
 // Include React Native Gradle plugin
 includeBuild('../node_modules/@react-native/gradle-plugin')
+    
