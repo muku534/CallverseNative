@@ -5,22 +5,21 @@ import auth from '@react-native-firebase/auth';
 import { useDispatch, useSelector } from 'react-redux';
 import { CommonActions } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { fetchChats, fetchContacts, loginUser } from '../../redux/action';
+import { addChats, addContact, fetchChats, fetchContacts, loginUser } from '../../redux/action';
 import firestore from '@react-native-firebase/firestore';
+import Contacts from '../home/contact';
+import { retrieveDataFromAsyncStorage, storeDataInAsyncStorage } from '../../utils/Helper';
 
 const SplashScreen = ({ navigation }) => {
 
     const dispatch = useDispatch();
-    const userData = useSelector(state => state.userData)
-    console.log("redux user data", userData)
 
     const fetchUserData = async (userId) => {
         try {
             // Check if user data is cached in AsyncStorage
-            const cachedUserData = await AsyncStorage.getItem('userData');
+            const cachedUserData = retrieveDataFromAsyncStorage('userData');
             if (cachedUserData) {
                 const userData = JSON.parse(cachedUserData);
-                console.log('User data fetched from cache:', userData.randomNumber);
                 dispatch(loginUser(userData));
                 return userData;
             }
@@ -29,10 +28,7 @@ const SplashScreen = ({ navigation }) => {
             const userDoc = await firestore().collection('Users').doc(userId).get();
             if (userDoc.exists) {
                 const userData = userDoc.data();
-                console.log('User data fetched from Firestore:', userData.randomNumber);
-
-                // Cache the data locally
-                await AsyncStorage.setItem('userData', JSON.stringify(userData));
+                await storeDataInAsyncStorage('userData', userData);
                 dispatch(loginUser(userData));
                 return userData;
             } else {
@@ -43,90 +39,93 @@ const SplashScreen = ({ navigation }) => {
         }
     };
 
-    const getContacts = async (userId) => {
+    const fetchContactsIfNeeded = async (userId) => {
         try {
-            if (!userId) {
-                console.error('No userData found');
-                return;
-            }
-
-            const contactsRef = firestore().collection('Contacts').doc(userId);
-            const doc = await contactsRef.get();
-
-            if (doc.exists) {
-                const contacts = doc.data().contacts;
-                dispatch(fetchContacts(contacts));
-                console.log('Contacts fetched:', contacts);
+            const cachedContacts = await retrieveDataFromAsyncStorage('contacts');
+            if (cachedContacts) {
+                dispatch(fetchContacts(JSON.parse(cachedContacts)));
+                console.log('cachedContacts', cachedContacts);
             } else {
-                console.error('Contacts not found');
+                const contactsRef = firestore().collection('Contacts').doc(userId);
+                const doc = await contactsRef.get();
+                if (doc.exists) {
+                    const contacts = doc.data().contacts;
+                    await storeDataInAsyncStorage('contacts', contacts);
+                    dispatch(fetchContacts(contacts));
+                    console.log('contacts fetch from firestore', contacts);
+
+                } else {
+                    console.log('No contacts found');
+                }
             }
         } catch (error) {
-            console.error('Error fetching contacts:', error);
+            console.log('Error fetching contacts:', error);
+        }
+    }
+
+    const fetchChatsIfNeeded = async (userId) => {
+        try {
+            const cachedChats = await retrieveDataFromAsyncStorage('chats');
+            if (cachedChats) {
+                dispatch(fetchChats(JSON.parse(cachedChats)));
+                console.log('cachedContacts', cachedChats);
+
+            } else {
+                const chatsRef = firestore().collection('chatRooms').where('users', 'array-contains', userId);
+                const snapShot = await chatsRef.get();
+                if (!snapShot.empty) {
+                    const chats = snapShot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    await storeDataInAsyncStorage('chats', chats);
+                    dispatch(fetchChats(chats))
+                    console.log('contacts fetch from firestore', chats);
+                } else {
+                    console.log('No chats found');
+                }
+            }
+        } catch (error) {
+            console.log('Error fetching chats:', error);
         }
     };
 
-    const getChats = async (userId) => {
-        try {
-            if (!userId) {
-                console.error('No userId found');
-                return;
+    const subscribeToFirestoreUpdates = (userId) => {
+        const contactsRef = firestore().collection('Contacts').doc(userId);
+        const chatsRef = firestore().collection('chatRooms').where('users', 'array-contains', userId);
+
+        // Real-time updates for contacts
+        const unsubscribeContacts = contactsRef.onSnapshot(async (doc) => {
+            if (doc.exists) {
+                const updatedContacts = doc.data().contacts;
+                await storeDataInAsyncStorage('contacts', updatedContacts);
+                dispatch(addContact(updatedContacts));
             }
+        });
 
-            // Query for chat rooms where the user's ID is in the 'users' array
-            const chatsRef = firestore().collection('chatRooms');
-            const snapshot = await chatsRef.where('users', 'array-contains', userId).get();
-
+        // Real-time updates for chats
+        const unsubscribeChats = chatsRef.onSnapshot(async (snapshot) => {
             if (!snapshot.empty) {
-                // Extract chats from each document
-                const chats = await Promise.all(snapshot.docs.map(async (doc) => {
-                    const data = doc.data();
-                    console.log('Document data:', data); // Debugging line
-
-                    // Determine the other user's ID
-                    const otherUserId = data.users.find(id => id !== userId);
-                    let otherUserData = {};
-
-                    if (otherUserId) {
-                        // Fetch other user data from Users collection
-                        const userDoc = await firestore().collection('Users').doc(otherUserId).get();
-                        otherUserData = userDoc.data() || {};
-                    }
-
-                    // Return an object with chat details including other user information
-                    return {
-                        id: doc.id,
-                        archived: data.archived,
-                        createdAt: data.createdAt,
-                        messages: data.messages || [], // Ensure to return an empty array if 'messages' is undefined
-                        otherUser: otherUserData // Include other user data
-                    };
-                }));
-
-                // Dispatch the fetched chats
-                dispatch(fetchChats(chats));
-                console.log('Chats fetched:', chats);
-            } else {
-                console.error('No chats found for this user');
+                const updatedChats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                await storeDataInAsyncStorage('chats', updatedChats);
+                dispatch(addChats(updatedChats));
             }
-        } catch (error) {
-            console.error('Error fetching chats:', error);
-        }
+        });
+
+        return () => {
+            unsubscribeContacts(); // Unsubscribe when component unmounts
+            unsubscribeChats();
+        };
     };
 
     useEffect(() => {
-        const checkAuthAndFetchProducts = async () => {
+        const initializeApp = async () => {
             try {
                 const currentUser = auth().currentUser;
                 if (currentUser) {
                     const userId = currentUser.uid;
-                    console.log('Authenticated user ID:', userId);
+                    // Fetch user data, contacts, and chats if needed
+                    await Promise.all([fetchUserData(userId), fetchContactsIfNeeded(userId), fetchChatsIfNeeded(userId)]);
 
-                    // Fetch user data and chats in parallel
-                    await Promise.all([
-                        fetchUserData(userId),
-                        getContacts(userId),
-                        getChats(userId)
-                    ]);
+                    // Set up real-time listeners for updates
+                    const unsubscribe = subscribeToFirestoreUpdates(userId);
 
                     // // Navigate to the home screen or other protected screens
                     navigation.dispatch(
@@ -135,6 +134,7 @@ const SplashScreen = ({ navigation }) => {
                             routes: [{ name: 'TabStack' }],
                         })
                     );
+                    return unsubscribe; // Unsubscribe listeners on unmount
                 } else {
                     navigation.dispatch(
                         CommonActions.reset({
@@ -148,12 +148,13 @@ const SplashScreen = ({ navigation }) => {
             }
         };
 
+        // Wait 2 seconds before starting the app
         const timer = setTimeout(() => {
-            checkAuthAndFetchProducts();
-        }, 2000);
+            initializeApp();
+        }, 1000);
 
-        return () => clearTimeout(timer);
-    }, []);
+        return () => clearTimeout(timer); // Cleanup timer
+    }, [navigation]);
 
     return (
         <>
