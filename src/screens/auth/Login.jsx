@@ -15,9 +15,10 @@ import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { EmailSignin } from '../../config/EmailSignup';
 import { CommonActions } from '@react-navigation/native';
-import { fetchChats, fetchContacts, loginUser } from '../../redux/action';
+import { fetchChats, fetchChatsRoom, fetchContacts, loginUser } from '../../redux/action';
 import { useDispatch } from 'react-redux';
 import messaging from '@react-native-firebase/messaging';
+import { retrieveDataFromAsyncStorage, storeDataInAsyncStorage } from '../../utils/Helper';
 
 const Login = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -44,7 +45,11 @@ const Login = ({ navigation }) => {
 
             const user = await EmailSignin({ email, password });
             if (user) {
-                await getChats(user.uid);
+                // await getChats(user.uid);
+                await fetchUserData(user.uid);
+                await getContacts(user.uid);
+                await fetchChatsIfNeeded(user.uid);
+                console.log("users login", user)
                 ToastAndroid.show('Signed in successfully!', ToastAndroid.SHORT);
                 navigation.dispatch(
                     CommonActions.reset({
@@ -56,14 +61,21 @@ const Login = ({ navigation }) => {
                 if (fcmToken) {
                     await firestore().collection('Users').doc(user.uid).update({ fcmToken });
                 }
-                await fetchUserData(user.uid);
                 setCredentials({ email: '', password: '' });
             } else {
                 ToastAndroid.show('Invalid email or password', ToastAndroid.SHORT);
             }
         } catch (error) {
             console.error('Signin Error:', error);
-            ToastAndroid.show('Failed to sign in. Please try again.', ToastAndroid.SHORT);
+            let errorMessage = 'Failed to sign in. Please try again.';
+
+            if (error.code === 'auth/invalid-email') {
+                errorMessage = 'Invalid email address.';
+            } else if (error.code === 'auth/wrong-password') {
+                errorMessage = 'Incorrect password. Please try again.';
+            }
+
+            ToastAndroid.show(errorMessage, ToastAndroid.SHORT);
         } finally {
             setLoadingState({ loading: false });
         }
@@ -86,9 +98,8 @@ const Login = ({ navigation }) => {
                     console.error('Failed to retrieve FCM token');
                 }
 
-                await AsyncStorage.setItem('userData', JSON.stringify(userData));
+                await storeDataInAsyncStorage('userData', userData);
                 dispatch(loginUser(userData));
-                await getContacts(userId);
             } else {
                 console.error('User data not found in Firestore');
             }
@@ -103,8 +114,8 @@ const Login = ({ navigation }) => {
             const doc = await contactsRef.get();
             if (doc.exists) {
                 const contacts = doc.data().contacts;
+                await storeDataInAsyncStorage('contacts', contacts);
                 dispatch(fetchContacts(contacts));
-                console.log('Contacts fetched:', contacts);
             } else {
                 console.error('Contacts not found');
             }
@@ -113,54 +124,61 @@ const Login = ({ navigation }) => {
         }
     }, []);
 
-    const getChats = async (userId) => {
+    const fetchChatsIfNeeded = async (userId) => {
         try {
-            if (!userId) {
-                console.error('No userId found');
-                return;
-            }
-
-            // Query for chat rooms where the user's ID is in the 'users' array
-            const chatsRef = firestore().collection('chatRooms');
-            const snapshot = await chatsRef.where('users', 'array-contains', userId).get();
-
+            const chatsRef = firestore().collection('chatRooms').where('users', 'array-contains', userId).limit(10);
+            const snapshot = await chatsRef.get();
             if (!snapshot.empty) {
-                // Extract chats from each document
-                const chats = await Promise.all(snapshot.docs.map(async (doc) => {
-                    const data = doc.data();
-                    console.log('Document data:', data); // Debugging line
+                const otherUsersIds = new Set();
 
-                    // Determine the other user's ID
-                    const otherUserId = data.users.find(id => id !== userId);
-                    let otherUserData = {};
+                const chats = snapshot.docs.map(doc => {
+                    const chatRoomId = doc.id;
+                    const { archived } = doc.data();
 
-                    if (otherUserId) {
-                        // Fetch other user data from Users collection
-                        const userDoc = await firestore().collection('Users').doc(otherUserId).get();
-                        otherUserData = userDoc.data() || {};
-                    }
+                    const ids = chatRoomId.split('_');
+                    const otherUsersId = ids[0] === userId ? ids[1] : ids[0];
+                    otherUsersIds.add(otherUsersId);
 
-                    // Return an object with chat details including other user information
-                    return {
-                        id: doc.id,
-                        archived: data.archived,
-                        createdAt: data.createdAt,
-                        messages: data.messages || [], // Ensure to return an empty array if 'messages' is undefined
-                        otherUser: otherUserData // Include other user data
-                    };
-                }));
+                    return { id: chatRoomId, otherUsersId, archived };
+                });
 
-                // Dispatch the fetched chats
-                dispatch(fetchChats(chats));
-                console.log('Chats fetched:', chats);
+                //Fetch the contact data  for the other users in the chat from the AsyncStorage
+                const contacts = await retrieveDataFromAsyncStorage('contacts') || [];
+                const contactIds = contacts.map(contact => contact.id);
+
+                //separate users who are alredy in contact list
+                const userToFetch = Array.from(otherUsersIds).filter(id => !contactIds.includes(id));
+                const fetchedUsers = await fetchUsers(userToFetch);
+
+                const allUsers = [...contacts, ...fetchedUsers];
+
+                await storeDataInAsyncStorage('chatRooms', allUsers);
+                dispatch(fetchChatsRoom({ chatRoom: allUsers }));
             } else {
-                console.error('No chats found for this user');
+                console.log('No chatRooms found');
             }
         } catch (error) {
-            console.error('Error fetching chats:', error);
+            console.error('Error fetching chatRooms:', error);
         }
     };
 
+    const fetchUsers = async (userIds) => {
+        try {
+            if (userIds.length === 0) return [];
+
+            const usersRef = firestore().collection('Users');
+            const usersPromises = userIds.map(async (id) => {
+                const userDoc = await usersRef.doc(id).get();
+                return userDoc.exists ? { id, ...userDoc.data() } : null;
+            });
+
+            const users = await Promise.all(usersPromises);
+            return users.filter(user => user);
+        } catch (error) {
+            console.error('Error fetching users:', error);
+            return [];
+        }
+    }
 
     return (
         <SafeAreaView style={styles.container}>

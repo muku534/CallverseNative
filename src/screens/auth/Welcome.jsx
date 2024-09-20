@@ -91,8 +91,8 @@ const Welcome = ({ navigation }) => {
 
     return (
         <LinearGradient colors={[COLORS.secondary, COLORS.primary]} style={{ flex: 1 }}>
-            <SafeAreaView style={{ backgroundColor: COLORS.darkGreeen }}>
-                <StatusBar backgroundColor={COLORS.lightGreen} barStyle="light-content" />
+            <SafeAreaView>
+                <StatusBar backgroundColor={COLORS.secondary} barStyle="light-content" />
                 <View style={styles.container}>
                     <View>
                         <Image
