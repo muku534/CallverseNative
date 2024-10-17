@@ -1,3 +1,4 @@
+
 import { StatusBar, StyleSheet } from 'react-native';
 import React, { useEffect } from 'react';
 import LottieView from 'lottie-react-native';
@@ -73,15 +74,15 @@ const SplashScreen = ({ navigation }) => {
             const cachedChats = await retrieveDataFromAsyncStorage('chatRooms');
             if (cachedChats) {
                 try {
+                    // Step 2: Dispatch cached chats to Redux if they exist
                     dispatch(fetchChats(cachedChats));
-                    console.log('cachedChats', cachedChats);
+                    console.log('Using cached chats', cachedChats);
                     return cachedChats;
-                } catch (parseError) {
-                    console.error('Error parsing chatRooms data from AsyncStorage:', parseError);
+                } catch (error) {
+                    console.error('Error using cached chatRooms data:', error);
                     await storeDataInAsyncStorage('chatRooms', []); // Clear corrupted data
                 }
             }
-
             const chatsRef = firestore().collection('chatRooms').where('users', 'array-contains', userId).limit(10);
             const snapshot = await chatsRef.get();
             if (!snapshot.empty) {
@@ -102,14 +103,27 @@ const SplashScreen = ({ navigation }) => {
                 const contacts = await retrieveDataFromAsyncStorage('contacts') || [];
                 const contactIds = contacts.map(contact => contact.id);
 
-                //separate users who are alredy in contact list
-                const userToFetch = Array.from(otherUsersIds).filter(id => !contactIds.includes(id));
-                const fetchedUsers = await fetchUsers(userToFetch);
+                // Step 3: Identify users who need to be fetched from Firestore
+                const userIdsToFetch = Array.from(otherUsersIds).filter(id => !contactIds.includes(id));
+
+                // Step 4: Fetch user data for users not in the contact list
+                const fetchedUsers = await fetchUsers(userIdsToFetch);
 
                 const allUsers = [...contacts, ...fetchedUsers];
 
                 await storeDataInAsyncStorage('chatRooms', allUsers);
-                dispatch(fetchChatsRoom({ chatRoom: allUsers }));
+
+                // Step 7: Merge user data with the chats data
+                const chatsWithUserDetails = chats.map(chat => {
+                    const otherUserData = allUsers.find(user => user.id === chat.otherUsersId);
+                    return {
+                        ...chat,
+                        otherUser: otherUserData || null // Add user data or null if not found
+                    };
+                });
+
+                // Step 8: Dispatch the final chat data with user details
+                dispatch(fetchChatsRoom(chatsWithUserDetails));
             } else {
                 console.log('No chatRooms found');
             }
@@ -117,6 +131,7 @@ const SplashScreen = ({ navigation }) => {
             console.error('Error fetching chatRooms:', error);
         }
     };
+
 
     const fetchUsers = async (userIds) => {
         try {
@@ -151,7 +166,7 @@ const SplashScreen = ({ navigation }) => {
         const unsubscribeChats = chatsRef.onSnapshot(async (snapshot) => {
             if (!snapshot.empty) {
                 const updatedChats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                await storeDataInAsyncStorage('chats', updatedChats);
+                await storeDataInAsyncStorage('chatRooms', updatedChats);
                 dispatch(addChats(updatedChats));
             }
         });

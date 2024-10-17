@@ -17,6 +17,10 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
     <application
       android:name=".MainApplication"
@@ -26,21 +30,6 @@
       android:theme="@style/AppTheme">
        <service android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationRegistrationService" />
        <receiver android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationReceiver" />
-
-    <meta-data
-      android:name="live.videosdk.rnfgservice.notification_channel_name"
-      android:value="Meeting Notification"
-     />
-    <meta-data
-    android:name="live.videosdk.rnfgservice.notification_channel_description"
-    android:value="Whenever meeting started notification will appear."
-    />
-    <meta-data
-    android:name="live.videosdk.rnfgservice.notification_color"
-    android:resource="@color/red"
-    />
-    <service android:name="live.videosdk.rnfgservice.ForegroundService" android:foregroundServiceType="mediaProjection"></service>
-    <service android:name="live.videosdk.rnfgservice.ForegroundServiceTask"></service>
        
       <activity
         android:name=".MainActivity"

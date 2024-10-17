@@ -6,7 +6,6 @@ import SplashScreen from './src/screens/auth/SplashScreen';
 import Login from './src/screens/auth/Login';
 import Welcome from './src/screens/auth/Welcome';
 import AddProfile from './src/screens/home/AddProfile';
-import VoiceCall from './src/screens/home/VoiceCall'
 import { Provider } from 'react-redux';
 import store from './src/redux/store';
 import AddContact from './src/screens/home/AddContact';
@@ -20,6 +19,7 @@ import { createSharedElementStackNavigator } from 'react-navigation-shared-eleme
 import UserDetailScreen from './src/screens/home/UserDetailScreen';
 import PushNotification from 'react-native-push-notification';
 import EditProfile from './src/screens/home/EditProfile';
+import CallingScreen from './src/screens/home/CallingScreen';
 
 // Setup PushNotification
 PushNotification.configure({
@@ -54,6 +54,19 @@ function App() {
   const navigationRef = useRef(null);
 
   useEffect(() => {
+    // Create the notification channel (for Android 8.0+)
+    PushNotification.createChannel(
+      {
+        channelId: 'default-channel-id',
+        channelName: 'Default Channel',
+        channelDescription: 'A default channel for app notifications',
+        importance: 4,
+        vibrate: true,
+      },
+      (created) => console.log(`Channel created: ${created}`)
+    );
+
+    // Request notification permissions
     const requestPermission = async () => {
       const authStatus = await messaging().requestPermission();
       const enabled =
@@ -61,36 +74,32 @@ function App() {
         authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
       if (enabled) {
-        console.log('Authorization status:', authStatus);
+        console.log('Notification permission granted.');
       } else {
-        console.log('Notification permission not granted');
+        console.log('Notification permission denied.');
       }
     };
 
     requestPermission();
-  }, []);
 
-
-  useEffect(() => {
     // Handle foreground notifications
     const unsubscribe = messaging().onMessage(async remoteMessage => {
       console.log('Foreground message received!', JSON.stringify(remoteMessage));
 
-      // Display the notification using react-native-push-notification
       PushNotification.localNotification({
         channelId: 'default-channel-id',
-        title: remoteMessage.notification.title,
-        message: remoteMessage.notification.body,
+        title: remoteMessage.notification.title || 'New Message',
+        message: remoteMessage.notification.body || 'You have a new message',
         data: remoteMessage.data,
       });
     });
 
-    // Handle notification taps when the app is in the background
+    // Handle background notifications
     messaging().setBackgroundMessageHandler(async remoteMessage => {
       console.log('Background message received!', JSON.stringify(remoteMessage));
     });
 
-    // Handle notification taps when the app is closed
+    // Handle initial notification when the app is opened from a quit state
     messaging()
       .getInitialNotification()
       .then(remoteMessage => {
@@ -99,11 +108,11 @@ function App() {
         }
       });
 
+    // Cleanup foreground handler
     return () => {
-      unsubscribe(); // Clean up the foreground message handler
+      unsubscribe();
     };
   }, []);
-
 
   return (
     <Provider store={store}>
@@ -115,22 +124,14 @@ function App() {
             <Stack.Screen name="TabStack" component={TabStack} options={{ headerShown: false }} />
             <Stack.Screen name="Profile" component={Profile} options={{ headerShown: false }} />
             <Stack.Screen name="Contacts" component={Contacts} options={{ headerShown: false }} />
-            <Stack.Screen
-              name="UserDetail"
-              component={UserDetailScreen}
-              sharedElements={(route) => {
-                const { userId } = route.params;
-                return [`item.${userId}.photo`];
-              }}
-              options={{ headerShown: false }}
-            />
+            <Stack.Screen name="UserDetail" component={UserDetailScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ArchivedChats" component={ArchivedChats} options={{ headerShown: false }} />
             <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
             <Stack.Screen name="AddProfile" component={AddProfile} options={{ headerShown: false }} />
             <Stack.Screen name="EditProfile" component={EditProfile} options={{ headerShown: false }} />
             <Stack.Screen name="AddContact" component={AddContact} options={{ headerShown: false }} />
             <Stack.Screen name="PersonalChats" component={PersonalChats} options={{ headerShown: false }} />
-            <Stack.Screen name="VoiceCall" component={VoiceCall} options={{ headerShown: false }} />
+            <Stack.Screen name="CallingScreen" component={CallingScreen} options={{ headerShown: false }} />
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>

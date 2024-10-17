@@ -146,14 +146,27 @@ const Login = ({ navigation }) => {
                 const contacts = await retrieveDataFromAsyncStorage('contacts') || [];
                 const contactIds = contacts.map(contact => contact.id);
 
-                //separate users who are alredy in contact list
-                const userToFetch = Array.from(otherUsersIds).filter(id => !contactIds.includes(id));
-                const fetchedUsers = await fetchUsers(userToFetch);
+                // Step 3: Identify users who need to be fetched from Firestore
+                const userIdsToFetch = Array.from(otherUsersIds).filter(id => !contactIds.includes(id));
+
+                // Step 4: Fetch user data for users not in the contact list
+                const fetchedUsers = await fetchUsers(userIdsToFetch);
 
                 const allUsers = [...contacts, ...fetchedUsers];
 
                 await storeDataInAsyncStorage('chatRooms', allUsers);
-                dispatch(fetchChatsRoom({ chatRoom: allUsers }));
+                
+                // Step 7: Merge user data with the chats data
+                const chatsWithUserDetails = chats.map(chat => {
+                    const otherUserData = allUsers.find(user => user.id === chat.otherUsersId);
+                    return {
+                        ...chat,
+                        otherUser: otherUserData || null // Add user data or null if not found
+                    };
+                });
+
+                // Step 8: Dispatch the final chat data with user details
+                dispatch(fetchChatsRoom(chatsWithUserDetails));
             } else {
                 console.log('No chatRooms found');
             }
@@ -193,8 +206,8 @@ const Login = ({ navigation }) => {
                             <Text style={styles.welcomeText2}>Hello again, you have been missed!</Text>
                         </View>
                         <InputField
-                            label="Phone / Email"
-                            placeholder="Enter your Phone or Email"
+                            label="Email"
+                            placeholder="max123@xyz.com"
                             value={credentials.email}
                             onChangeText={text => handleInputChange('email', text)}
                         />
@@ -225,7 +238,7 @@ const InputField = ({ label, placeholder, value, onChangeText }) => (
         <View style={styles.textInput}>
             <TextInput
                 placeholder={placeholder}
-                placeholderTextColor={COLORS.darkgray1}
+                placeholderTextColor={COLORS.secondaryGray}
                 style={styles.inputText}
                 value={value}
                 onChangeText={onChangeText}
