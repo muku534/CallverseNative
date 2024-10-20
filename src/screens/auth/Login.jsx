@@ -19,11 +19,34 @@ import { fetchChats, fetchChatsRoom, fetchContacts, loginUser } from '../../redu
 import { useDispatch } from 'react-redux';
 import messaging from '@react-native-firebase/messaging';
 import { retrieveDataFromAsyncStorage, storeDataInAsyncStorage } from '../../utils/Helper';
+import { storeUserInSQLite } from '../../services/sqliteHelpers';
 
 const Login = ({ navigation }) => {
     const dispatch = useDispatch();
     const [credentials, setCredentials] = useState({ email: '', password: '' });
     const [loadingState, setLoadingState] = useState({ loading: false });
+
+
+    const validateEmail = (email) => {
+        // Basic email validation regex
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
+
+    const handleLoginError = (error) => {
+        console.error('Signin Error:', error);
+        let errorMessage = 'Failed to sign in. Please try again.';
+
+        if (error.code === 'auth/invalid-email') {
+            errorMessage = 'Invalid email address.';
+        } else if (error.code === 'auth/wrong-password') {
+            errorMessage = 'Incorrect password. Please try again.';
+        } else if (error.code === 'auth/user-not-found') {
+            errorMessage = 'No user found with this email address.';
+        }
+
+        ToastAndroid.show(errorMessage, ToastAndroid.SHORT);
+    };
 
     const handleInputChange = useCallback((field, value) => {
         setCredentials(prev => ({ ...prev, [field]: value }));
@@ -31,10 +54,17 @@ const Login = ({ navigation }) => {
 
     const handleSignin = useCallback(async () => {
         const { email, password } = credentials;
+
         if (!email || !password) {
             ToastAndroid.show('Please enter email and password', ToastAndroid.SHORT);
             return;
         }
+
+        if (!validateEmail(email)) {
+            ToastAndroid.show('Please enter a valid email address', ToastAndroid.SHORT);
+            return;
+        }
+
 
         try {
             setLoadingState({ loading: true });
@@ -50,6 +80,7 @@ const Login = ({ navigation }) => {
                 await getContacts(user.uid);
                 await fetchChatsIfNeeded(user.uid);
                 console.log("users login", user)
+
                 ToastAndroid.show('Signed in successfully!', ToastAndroid.SHORT);
                 navigation.dispatch(
                     CommonActions.reset({
@@ -57,6 +88,7 @@ const Login = ({ navigation }) => {
                         routes: [{ name: 'TabStack' }],
                     })
                 );
+
                 // Store FCM token in Firestore
                 if (fcmToken) {
                     await firestore().collection('Users').doc(user.uid).update({ fcmToken });
@@ -66,16 +98,7 @@ const Login = ({ navigation }) => {
                 ToastAndroid.show('Invalid email or password', ToastAndroid.SHORT);
             }
         } catch (error) {
-            console.error('Signin Error:', error);
-            let errorMessage = 'Failed to sign in. Please try again.';
-
-            if (error.code === 'auth/invalid-email') {
-                errorMessage = 'Invalid email address.';
-            } else if (error.code === 'auth/wrong-password') {
-                errorMessage = 'Incorrect password. Please try again.';
-            }
-
-            ToastAndroid.show(errorMessage, ToastAndroid.SHORT);
+            handleLoginError(error);
         } finally {
             setLoadingState({ loading: false });
         }
@@ -98,7 +121,7 @@ const Login = ({ navigation }) => {
                     console.error('Failed to retrieve FCM token');
                 }
 
-                await storeDataInAsyncStorage('userData', userData);
+                await storeUserInSQLite(userData);
                 dispatch(loginUser(userData));
             } else {
                 console.error('User data not found in Firestore');
@@ -114,7 +137,7 @@ const Login = ({ navigation }) => {
             const doc = await contactsRef.get();
             if (doc.exists) {
                 const contacts = doc.data().contacts;
-                await storeDataInAsyncStorage('contacts', contacts);
+                await storeContactInSQLite(contacts);
                 dispatch(fetchContacts(contacts));
             } else {
                 console.error('Contacts not found');
@@ -154,8 +177,8 @@ const Login = ({ navigation }) => {
 
                 const allUsers = [...contacts, ...fetchedUsers];
 
-                await storeDataInAsyncStorage('chatRooms', allUsers);
-                
+                await storeChatRoomInSQLite(allUsers);
+
                 // Step 7: Merge user data with the chats data
                 const chatsWithUserDetails = chats.map(chat => {
                     const otherUserData = allUsers.find(user => user.id === chat.otherUsersId);
@@ -214,6 +237,7 @@ const Login = ({ navigation }) => {
                         <InputField
                             label="Password"
                             placeholder="Enter your Password"
+                            secureTextEntry={true} // Hide password input
                             value={credentials.password}
                             onChangeText={text => handleInputChange('password', text)}
                         />
@@ -242,6 +266,7 @@ const InputField = ({ label, placeholder, value, onChangeText }) => (
                 style={styles.inputText}
                 value={value}
                 onChangeText={onChangeText}
+                secureTextEntry={secureTextEntry}
             />
         </View>
     </View>

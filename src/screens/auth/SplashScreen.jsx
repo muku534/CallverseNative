@@ -26,16 +26,6 @@ const SplashScreen = ({ navigation }) => {
                     await storeDataInAsyncStorage('userData', {}); // Clear corrupted data
                 }
             }
-
-            const userDoc = await firestore().collection('Users').doc(userId).get();
-            if (userDoc.exists) {
-                const userData = userDoc.data();
-                await storeDataInAsyncStorage('userData', userData);
-                dispatch(loginUser(userData));
-                return userData;
-            } else {
-                console.error('User data not found in Firestore');
-            }
         } catch (error) {
             console.error('Error fetching user data:', error);
         }
@@ -54,16 +44,6 @@ const SplashScreen = ({ navigation }) => {
                     await storeDataInAsyncStorage('contacts', []); // Clear corrupted data
                 }
             }
-
-            const contactsRef = firestore().collection('Contacts').doc(userId);
-            const doc = await contactsRef.get();
-            if (doc.exists) {
-                const contacts = doc.data().contacts;
-                await storeDataInAsyncStorage('contacts', contacts);
-                dispatch(fetchContacts(contacts));
-            } else {
-                console.log('No contacts found');
-            }
         } catch (error) {
             console.error('Error fetching contacts:', error);
         }
@@ -75,7 +55,7 @@ const SplashScreen = ({ navigation }) => {
             if (cachedChats) {
                 try {
                     // Step 2: Dispatch cached chats to Redux if they exist
-                    dispatch(fetchChats(cachedChats));
+                    dispatch(fetchChatsRoom(cachedChats));
                     console.log('Using cached chats', cachedChats);
                     return cachedChats;
                 } catch (error) {
@@ -83,98 +63,10 @@ const SplashScreen = ({ navigation }) => {
                     await storeDataInAsyncStorage('chatRooms', []); // Clear corrupted data
                 }
             }
-            const chatsRef = firestore().collection('chatRooms').where('users', 'array-contains', userId).limit(10);
-            const snapshot = await chatsRef.get();
-            if (!snapshot.empty) {
-                const otherUsersIds = new Set();
 
-                const chats = snapshot.docs.map(doc => {
-                    const chatRoomId = doc.id;
-                    const { archived } = doc.data();
-
-                    const ids = chatRoomId.split('_');
-                    const otherUsersId = ids[0] === userId ? ids[1] : ids[0];
-                    otherUsersIds.add(otherUsersId);
-
-                    return { id: chatRoomId, otherUsersId, archived };
-                });
-
-                //Fetch the contact data  for the other users in the chat from the AsyncStorage
-                const contacts = await retrieveDataFromAsyncStorage('contacts') || [];
-                const contactIds = contacts.map(contact => contact.id);
-
-                // Step 3: Identify users who need to be fetched from Firestore
-                const userIdsToFetch = Array.from(otherUsersIds).filter(id => !contactIds.includes(id));
-
-                // Step 4: Fetch user data for users not in the contact list
-                const fetchedUsers = await fetchUsers(userIdsToFetch);
-
-                const allUsers = [...contacts, ...fetchedUsers];
-
-                await storeDataInAsyncStorage('chatRooms', allUsers);
-
-                // Step 7: Merge user data with the chats data
-                const chatsWithUserDetails = chats.map(chat => {
-                    const otherUserData = allUsers.find(user => user.id === chat.otherUsersId);
-                    return {
-                        ...chat,
-                        otherUser: otherUserData || null // Add user data or null if not found
-                    };
-                });
-
-                // Step 8: Dispatch the final chat data with user details
-                dispatch(fetchChatsRoom(chatsWithUserDetails));
-            } else {
-                console.log('No chatRooms found');
-            }
         } catch (error) {
             console.error('Error fetching chatRooms:', error);
         }
-    };
-
-
-    const fetchUsers = async (userIds) => {
-        try {
-            if (userIds.length === 0) return [];
-
-            const usersRef = firestore().collection('Users');
-            const usersPromises = userIds.map(async (id) => {
-                const userDoc = await usersRef.doc(id).get();
-                return userDoc.exists ? { id, ...userDoc.data() } : null;
-            });
-
-            const users = await Promise.all(usersPromises);
-            return users.filter(user => user);
-        } catch (error) {
-            console.error('Error fetching users:', error);
-            return [];
-        }
-    }
-
-    const subscribeToFirestoreUpdates = (userId) => {
-        const contactsRef = firestore().collection('Contacts').doc(userId);
-        const chatsRef = firestore().collection('chatRooms').where('users', 'array-contains', userId);
-
-        const unsubscribeContacts = contactsRef.onSnapshot(async (doc) => {
-            if (doc.exists) {
-                const updatedContacts = doc.data().contacts;
-                await storeDataInAsyncStorage('contacts', updatedContacts);
-                dispatch(addContact(updatedContacts));
-            }
-        });
-
-        const unsubscribeChats = chatsRef.onSnapshot(async (snapshot) => {
-            if (!snapshot.empty) {
-                const updatedChats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                await storeDataInAsyncStorage('chatRooms', updatedChats);
-                dispatch(addChats(updatedChats));
-            }
-        });
-
-        return () => {
-            unsubscribeContacts();
-            unsubscribeChats();
-        };
     };
 
     useEffect(() => {
@@ -189,8 +81,6 @@ const SplashScreen = ({ navigation }) => {
                         fetchChatsIfNeeded(userId),
                     ]);
 
-                    const unsubscribe = subscribeToFirestoreUpdates(userId);
-
                     navigation.dispatch(
                         CommonActions.reset({
                             index: 0,
@@ -198,7 +88,6 @@ const SplashScreen = ({ navigation }) => {
                         })
                     );
 
-                    return unsubscribe;
                 } else {
                     navigation.dispatch(
                         CommonActions.reset({
@@ -214,7 +103,7 @@ const SplashScreen = ({ navigation }) => {
 
         const timer = setTimeout(() => {
             initializeApp();
-        }, 1000);
+        }, 700);
 
         return () => clearTimeout(timer);
     }, [navigation]);
