@@ -2,7 +2,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react-native/no-inline-styles */
 /* eslint-disable prettier/prettier */
-import { View, Text, Pressable, Image, Alert, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, Modal, TextInput, ToastAndroid } from 'react-native';
+import { View, Text, Pressable, Image, Alert, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, Modal, TextInput, ToastAndroid, StatusBar } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import COLORS from '../../../constants/colors';
@@ -103,7 +103,8 @@ const AddProfile = ({ route, navigation }) => {
     }
 
     return (
-        <SafeAreaView style={{ flex: 1 }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.WhiteSmoke }}>
+            <StatusBar backgroundColor={COLORS.WhiteSmoke} barStyle="dark-content" />
             <ScrollView>
                 <View style={styles.container}>
                     <Text style={{
@@ -113,7 +114,7 @@ const AddProfile = ({ route, navigation }) => {
                         // marginVertical: ,
                         fontFamily: fontFamily.FONTS.Medium,
                         fontSize: hp(2.5),
-                        color: COLORS.darkgray1,
+                        color: COLORS.darkgray,
                     }}>
                         Complete your profile
                     </Text>
@@ -123,7 +124,7 @@ const AddProfile = ({ route, navigation }) => {
                         marginVertical: hp(1.5),
                         fontFamily: fontFamily.FONTS.regular,
                         fontSize: hp(2),
-                        color: COLORS.darkgray1,
+                        color: COLORS.darkgray,
                     }}>Add a profile photo, name and bio to let people know who you are </Text>
                     <TouchableOpacity onPress={toggleMenu}>
                         <View
@@ -132,7 +133,7 @@ const AddProfile = ({ route, navigation }) => {
                                 height: wp(35),
                                 marginVertical: hp(1),
                                 borderRadius: wp(35),
-                                backgroundColor: COLORS.secondaryWhite,
+                                backgroundColor: COLORS.white,
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 borderWidth: 1,
@@ -143,7 +144,7 @@ const AddProfile = ({ route, navigation }) => {
                                 <Image source={{ uri: selectedImage }} style={{ width: wp(34), height: wp(34), borderRadius: wp(34) }} />
                             ) : (
                                 <>
-                                    <AntDesign name="user" size={hp(7)} color={COLORS.darkgray1} />
+                                    <AntDesign name="user" size={hp(7)} color={COLORS.darkgray} />
                                     <View
                                         style={{
                                             position: 'absolute',
@@ -200,8 +201,11 @@ const AddProfile = ({ route, navigation }) => {
 
                     <View style={styles.formContainer}>
                         <Text style={styles.lable}>Phone Number</Text>
-                        <View style={styles.inputContainer}>
-                            <Text style={styles.TextInput}>{phoneNumber}</Text>
+                        <View style={[styles.inputContainer, {
+                            paddingHorizontal: wp(4),
+                            color: COLORS.darkgray, borderRadius: wp(2), justifyContent: 'center', backgroundColor: COLORS.gray,
+                        }]}>
+                            <Text style={{ color: COLORS.darkgray, fontFamily: fontFamily.FONTS.regular, fontSize: hp(1.9) }}>{phoneNumber}</Text>
                         </View>
 
                         <Text style={styles.lable}>Display name</Text>
@@ -239,11 +243,8 @@ const AddProfile = ({ route, navigation }) => {
 
                         <Button
                             title="Signup"
-                            // filled
                             onPress={handleSignup}
-                            style={{
-                                marginVertical: hp(4),
-                            }}
+                            style={{ marginVertical: hp(4) }}
                             loading={loading}
                         />
                     </View>
@@ -264,39 +265,23 @@ const styles = StyleSheet.create({
         paddingHorizontal: wp(4),
     },
     lable: {
-        fontSize: hp(2),
+        fontSize: hp(1.9),
         fontFamily: fontFamily.FONTS.regular,
         color: COLORS.darkgray,
-        // fontWeight: '400',
         marginVertical: hp(1),
     },
     inputContainer: {
         width: '100%',
         height: hp(6),
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    TextInput: {
-        width: '100%',
-        height: hp(6),
-        fontSize: hp(2),
-        padding: hp(1.5),
-        borderRadius: wp(2),
-        backgroundColor: COLORS.secondaryWhite,
-        color: '#111',
-        justifyContent: 'center',
-        alignItems: 'center',
     },
     textInput: {
         width: '100%',
         height: hp(6),
-        fontSize: hp(2),
+        fontSize: hp(1.8),
         borderRadius: wp(2),
-        backgroundColor: COLORS.secondaryWhite,
-        // paddingLeft: 22,
-        color: '#111',
-        justifyContent: 'center',
-        alignItems: 'center',
+        backgroundColor: COLORS.white,
+        paddingHorizontal: wp(4),
+        color: COLORS.darkgray,
     },
 });
 

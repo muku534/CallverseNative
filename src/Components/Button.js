@@ -7,6 +7,7 @@ import React from 'react';
 import COLORS from '../../constants/colors';
 import { heightPercentageToDP as hp, widthPercentageToDP as wp } from './Pixel/Index';
 import { Loader } from './Loader';
+import fontFamily from '../../constants/fontFamily';
 
 const Button = (props) => {
     const filledBgColor = props.color || COLORS.primary;
@@ -22,12 +23,13 @@ const Button = (props) => {
                 ...{ backgroundColor: COLORS.lightGreen },
                 ...props.style,
             }}
+            activeOpacity={0.7}
             onPress={props.onPress} disabled={props.disabled || props.loading}
         >
             {props.loading ? (
                 <Loader isLoading={props.loading} color={COLORS.secondaryWhite} />
             ) : (
-                <Text style={{ color: COLORS.white, fontWeight: '700', fontSize: hp(2.2) }}>{props.title}</Text>
+                <Text style={{ color: COLORS.white, fontFamily: fontFamily.FONTS.bold, fontSize: hp(2.2) }}>{props.title}</Text>
             )}
         </TouchableOpacity>
     );
@@ -36,18 +38,11 @@ const Button = (props) => {
 const styles = StyleSheet.create({
     button: {
         height: hp(5.8),
-        // paddingBottom: 16,
-        // paddingVertical: 10,
-        borderColor: COLORS.primary,
-        // borderWidth: 2,
-        borderRadius: wp(7),
+        width: wp(90),
+        borderRadius: wp(4),
+        marginHorizontal: wp(0),
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.80,
-        elevation: 1,
     },
 });
 export default Button;

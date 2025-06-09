@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import React, { useState, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, ToastAndroid, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, ToastAndroid, ScrollView, StyleSheet, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../../../constants';
 import Button from '../../Components/Button';
@@ -20,6 +20,7 @@ import { useDispatch } from 'react-redux';
 import messaging from '@react-native-firebase/messaging';
 import { retrieveDataFromAsyncStorage, storeDataInAsyncStorage } from '../../utils/Helper';
 import { storeUserInSQLite } from '../../services/sqliteHelpers';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; // Add this import
 
 const Login = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -218,6 +219,7 @@ const Login = ({ navigation }) => {
 
     return (
         <SafeAreaView style={styles.container}>
+            <StatusBar backgroundColor={COLORS.white} barStyle="dark-content" />
             <ScrollView showsVerticalScrollIndicator={false}>
                 <View>
                     <View style={styles.imageContainer}>
@@ -229,26 +231,30 @@ const Login = ({ navigation }) => {
                             <Text style={styles.welcomeText2}>Hello again, you have been missed!</Text>
                         </View>
                         <InputField
-                            label="Email"
+                            icon="email-outline"
                             placeholder="max123@xyz.com"
                             value={credentials.email}
                             onChangeText={text => handleInputChange('email', text)}
                         />
                         <InputField
-                            label="Password"
+                            icon="lock-outline"
                             placeholder="Enter your Password"
                             secureTextEntry={true} // Hide password input
                             value={credentials.password}
                             onChangeText={text => handleInputChange('password', text)}
                         />
-                        <Button
-                            title="Login"
-                            onPress={handleSignin}
-                            loading={loadingState.loading}
-                            style={styles.Button}
-                        />
+                        {/* Forgot Password */}
+                        <TouchableOpacity activeOpacity={0.7} onPress={() => navigation.navigate('ForgotPassword')}>
+                            <Text style={styles.forgotPassword}>Forgot Password?</Text>
+                        </TouchableOpacity>
                     </View>
-                    <Divider />
+
+                    <Button
+                        title="Login"
+                        onPress={handleSignin}
+                        loading={loadingState.loading}
+                        style={styles.Button}
+                    />
                     <LinkText navigation={navigation} />
                 </View>
             </ScrollView>
@@ -256,35 +262,27 @@ const Login = ({ navigation }) => {
     );
 };
 
-const InputField = ({ label, placeholder, value, onChangeText }) => (
+const InputField = ({ label, icon, placeholder, value, onChangeText }) => (
     <View style={styles.inputContainer}>
-        <Text style={styles.label}>{label}</Text>
+        {/* <Text style={styles.label}>{label}</Text> */}
         <View style={styles.textInput}>
+            <Icon name={icon} size={22} color={COLORS.secondaryGray} style={styles.inputIcon} />
             <TextInput
                 placeholder={placeholder}
                 placeholderTextColor={COLORS.secondaryGray}
                 style={styles.inputText}
                 value={value}
                 onChangeText={onChangeText}
-                secureTextEntry={secureTextEntry}
             />
         </View>
     </View>
 );
 
-const Divider = () => (
-    <View style={styles.lineText}>
-        <View style={styles.line} />
-        <Text style={styles.text}>or</Text>
-        <View style={styles.line} />
-    </View>
-);
-
 const LinkText = ({ navigation }) => (
     <View style={styles.linkContainer}>
-        <Text style={styles.linkText}>Don't have an account? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Welcome')} style={styles.linkButton}>
-            <Text style={styles.link}>Generate New Number</Text>
+        <Text style={styles.linkText}>Don't have an account?</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Welcome')}>
+            <Text style={styles.link}>Join Now</Text>
         </TouchableOpacity>
     </View>
 );
@@ -307,83 +305,73 @@ const styles = StyleSheet.create({
     contentContainer: {
         flex: 1,
         marginHorizontal: wp(3),
+        justifyContent: 'center',
     },
     welcomeContainer: {
         marginVertical: hp(1),
     },
     welcomeText: {
-        fontSize: hp(4),
+        fontSize: hp(3),
         fontFamily: fontFamily.FONTS.bold,
-        fontWeight: '700',
         marginTop: hp(2),
         color: COLORS.black,
     },
     welcomeText2: {
-        fontSize: hp(2.2),
+        fontSize: hp(2),
         color: COLORS.darkgray1,
         fontFamily: fontFamily.FONTS.regular,
     },
     inputContainer: {
-        marginBottom: hp(1),
-    },
-    label: {
-        color: COLORS.black,
-        fontSize: hp(2),
-        marginBottom: hp(1),
+        marginTop: hp(1),
+        marginBottom: hp(1.5),
     },
     textInput: {
+        flexDirection: 'row',
+        alignItems: 'center',
         width: '100%',
         height: hp(6),
-        borderColor: COLORS.secondaryGray,
-        borderWidth: 0.5,
+        borderColor: COLORS.gray,
+        borderWidth: 1,
         borderRadius: wp(2),
         paddingLeft: wp(2),
-        justifyContent: 'center',
+        backgroundColor: COLORS.white,
+    },
+    inputIcon: {
+        marginRight: wp(2),
     },
     inputText: {
-        width: '100%',
+        flex: 1,
         color: COLORS.darkgray1,
+        fontSize: hp(2),
+    },
+    forgotPassword: {
+        alignSelf: 'flex-end',
+        color: COLORS.primary,
+        fontFamily: fontFamily.FONTS.Medium,
+        fontSize: hp(1.9),
+        marginVertical: hp(1)
     },
     Button: {
-        marginTop: hp(3.5),
-        marginBottom: hp(1),
+        marginHorizontal: wp(5),
+        marginTop: hp(0.5),
+        marginBottom: hp(2),
     },
     linkContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
-        marginTop: hp(5),
+        marginTop: hp(0.5),
+        marginBottom: hp(2),
     },
     linkText: {
-        fontSize: hp(2.2),
-        color: COLORS.black,
-    },
-    linkButton: {
-        justifyContent: 'center',
-        alignItems: 'flex-end',
+        fontFamily: fontFamily.FONTS.Medium,
+        fontSize: hp(2),
+        color: COLORS.darkgray,
     },
     link: {
-        color: '#037f51',
-        fontSize: hp(2),
-        fontFamily: fontFamily.FONTS.Medium,
-        fontWeight: 'bold',
-    },
-    lineText: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginHorizontal: wp(5),
-        marginTop: hp(2.4),
-    },
-    line: {
-        flex: 1,
-        height: 1,
-        backgroundColor: 'black',
-    },
-    text: {
-        width: wp(10),
         fontSize: hp(2.2),
-        color: COLORS.black,
-        textAlign: 'center',
+        color: COLORS.primary,
+        fontFamily: fontFamily.FONTS.bold,
+        marginLeft: wp(1),
     },
 });
 

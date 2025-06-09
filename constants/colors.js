@@ -28,6 +28,7 @@ const COLORS = {
   black: '#222222',
   primary: '#007260',
   secondary: '#33a37e',
+  WhiteSmoke: '#f5f5f5',
 };
 
 export default COLORS;
