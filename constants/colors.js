@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 const COLORS = {
   // primary: '#002DE3',
   // secondary: '#0F1828',
