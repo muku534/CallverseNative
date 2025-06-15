@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "889153095336",
+    "project_id": "callverse-b7cb4",
+    "storage_bucket": "callverse-b7cb4.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:889153095336:android:0804682c262714ad06249d",
+        "android_client_info": {
+          "package_name": "com.callverse"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBe2XCr2bv9exIxi59CX6qlXWSXz5FVNQc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
